@@ -7,10 +7,10 @@
 | 改动 | 位置 |
 |---|---|
 | omp 工具映射与 Tern 显示步骤（agent 读） | `omp-tern/GUIDE.md` |
-| 在 Tern 里把编辑器开成画中画、复用、关闭 | `omp-tern/show.mjs`（Node 20+，无依赖） |
+| 在 Tern 里把编辑器开成画中画、复用、关闭；对能评论的类型输出评论监听命令（`next`） | `omp-tern/show.mjs`（Node 20+，无依赖） |
 | 四个 artifact skill 的入口 | `skills/{claude-slides,claude-design,claude-design-system,claude-dashboard}/SKILL.md` 标题段后插入一段「In omp or Tern」，以及 `omp-tern -> ../../fork-features/omp-tern` 软链接 |
 
-`dataviz` 不起编辑器、不用 Claude Code 专属工具，不接入。`GUIDE.md` 只替换工具名、增加 `open` 之后的显示步骤；格式、工艺规则和 NEVER VERIFY 仍以上游原文为准。
+`dataviz` 不起编辑器、不用 Claude Code 专属工具，不接入。`GUIDE.md` 只替换工具名、增加 `open` 之后的显示与评论监听步骤；格式、工艺规则和 NEVER VERIFY 仍以上游原文为准。
 
 `show.mjs` 每次运行都向 Tern 查询 `tern browser {"op":"blocks"}`，按 `<root>/.artifact-server.json` 里的 `url` 前缀匹配已有 block，自身不记录状态。打开后执行 `release`，把 block 交还给用户。
 
