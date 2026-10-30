@@ -40,12 +40,12 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  UPSTREAM: https://github.com/jimliu/baoyu-design.git
-  UPSTREAM_BRANCH: main
-  BASE_BRANCH: main
-  MERGE_BRANCH: sync/merge      # clean prefix → auto-merge
-  REVIEW_BRANCH: sync/review    # conflicting tail → human review
-  SYNC_LABEL: upstream-sync
+  UPSTREAM: https://github.com/mouriya-s-lab/baoyu-design.git
+  UPSTREAM_BRANCH: probe/upstream
+  BASE_BRANCH: probe/base
+  MERGE_BRANCH: probe/sync-merge
+  REVIEW_BRANCH: probe/sync-review
+  SYNC_LABEL: upstream-sync-probe
 
 jobs:
   sync:
