@@ -21,6 +21,9 @@ and saves the user's edits back into them.
 **Write only under `<root>/project/`**: a file elsewhere never shows; never write inside `project/_blobs/`. (A file you
 draft only to upload it sits in `<root>/src/`: Creating, step 2.)
 
+**In omp or Tern** (mouriya-s-lab fork): read `omp-tern/GUIDE.md` in this skill's folder before your first
+call. It maps these pages' tools to omp's and adds a step after `open` that shows the editor in Tern.
+
 ## A system kept in files
 
 Its index is `project/design-system.json`, nothing else, holding a `createdOnFiles` or

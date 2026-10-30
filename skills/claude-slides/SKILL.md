@@ -15,6 +15,9 @@ Artifact tool replaced by files on disk and this skill's `scripts/artifact.mjs` 
 `<root>`; its content is ITS OWN files under `<root>/project/`; write only there.** The editor page
 (`scripts/editor/`, served by `artifact.mjs open`) reads those files and saves the user's edits back into them.
 
+**In omp or Tern** (mouriya-s-lab fork): read `omp-tern/GUIDE.md` in this skill's folder before your first
+call. It maps these pages' tools to omp's and adds a step after `open` that shows the editor in Tern.
+
 ## The deck exists
 
 Work on THAT deck, its `<root>` in every command: never create

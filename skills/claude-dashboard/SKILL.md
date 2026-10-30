@@ -15,6 +15,9 @@ they left unsaid. Whatever the page's own code can draw or do is allowed: any
 chart, control or interaction. A chart they named is the one you draw, by hand
 where `d3` has no helper; if you draw another, say which and why.
 
+**In omp or Tern** (mouriya-s-lab fork): read `omp-tern/GUIDE.md` in this skill's folder before your first
+call. It maps these pages' tools to omp's and adds a step after `open` that shows the editor in Tern.
+
 ## The calls
 
 A dashboard is a folder, `<root>`: `designs/<slug>/` in the current project
