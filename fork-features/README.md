@@ -17,10 +17,13 @@
 ## 安装
 
 ```sh
-npx skills add mouriya-s-lab/baoyu-design -g -a codex -y
+npx skills add mouriya-s-lab/baoyu-design -g -a codex -y \
+  -s claude-slides -s claude-design -s claude-design-system -s claude-dashboard -s dataviz
 ```
 
-`-a codex` 安装到 `~/.agents/skills/`，omp 从该目录读取 skill。skills CLI 复制 skill 目录时会解引用 `omp-tern` 软链接，安装后的每个 skill 内都有 `omp-tern/` 实体文件。更新：`npx skills update -g -y`，然后重启 omp。
+`-a codex` 安装到 `~/.agents/skills/`，omp 从该目录读取 skill。skills CLI 复制 skill 目录时会解引用 `omp-tern` 软链接，安装后的每个 skill 内都有 `omp-tern/` 实体文件。
+
+更新：重跑上面的 `add` 命令覆盖安装，然后重启 omp。不要用 `npx skills update`：它按 skill 目录的 git tree hash 判断是否有更新，而 `omp-tern` 在 git 里只是一个不变的软链接，只改 `fork-features/omp-tern/` 时它检测不到；另外 `update -g` 会顺带更新全局所有其他来源的 skill。
 
 ## 上游同步
 
