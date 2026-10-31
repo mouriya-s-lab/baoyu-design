@@ -4,6 +4,35 @@
 
 本文档记录 `baoyu-design` 的重要变更。
 
+## 2.4.1 - 2026-10-31
+
+### 新功能
+- `claude-dashboard`：可以给图表、数字、表格或页面上任何地方加评论，勾 **Send to agent** 发给 Agent。新增 `comments`、`comment-reply`、`comment-resolve` 命令；`comments --wait` 会输出页面地址和标题。`dsh-claude-dashboard` 插件会等评论，发出的评论以卡片形式出现在对话里。
+- `claude-slides`、`claude-design`、`claude-design-system`：单独打开的页面上，评论按钮放到右上角的工具栏里。
+- 编辑器换上 claude.ai 现在的图标。
+- DeepSeek Harness：给「发现」页提供插件市场索引，地址是 `https://jimliu.github.io/baoyu-design/dsh-plugins/index.json`，每次发版后自动重新生成。
+
+### 修复
+- `claude-dashboard`：编辑器和其他编辑器一样，在 `scripts/editor/third-party-licenses.txt` 里带上所用开源包的许可。
+
+### 文档
+- 新增 `NOTICE.md`，写明各部分的许可：MIT 只管维护者自己写的部分；取自 Anthropic 的内容（改编自 Artifact 类型的技能说明和参考文档、`dataviz`、从 claude.ai 还原的编辑器、Anthropicons 图标字体，以及 `archive/` 里的 Claude Design 系统提示词、内置技能和起步组件）权利归 Anthropic，不适用 MIT；归档的 `frontend-design` 技能是 Apache 2.0，许可全文放在它旁边；开源代码各按原许可。`LICENSE`、README 和每个 `SKILL.md` 都指向它，DeepSeek Harness 插件也带上了它（`"license": "SEE LICENSE IN LICENSE"`）。
+- README 补上从 npm 和从「发现」安装 DeepSeek Harness 插件的说明。
+
+## 2.4.0 - 2026-10-30
+
+### 新功能
+- 四个编辑器的 DeepSeek Harness 插件发布到 npm：`dsh-claude-slides`、`dsh-claude-design`、`dsh-claude-design-system` 和 `dsh-claude-dashboard`。在应用里打开 **Plugins** → **Add plugin**，填插件名就能装。每个插件带着本仓库发布的那份技能和预先构建好的编辑器；插件文件夹也在 `dsh-plugins/` 里。
+- DeepSeek Harness 插件里，Agent 每次打开编辑器，插件都会开始等评论，所以对话空闲时勾 **Send to agent** 也能叫醒 Agent。发给 Agent 的评论会以卡片的形式出现在对话里，点卡片上的 **View thread** 会在编辑器里打开这条评论。
+- 评论：评论发给 Agent 以后，会自动打开这条评论，显示 "Working…"，直到 Agent 回复。编辑器地址里加 `?comment=<id>` 会打开那条评论；`comments --wait` 也会输出编辑器地址和作品标题。
+- 评论：All comments 面板里，鼠标移到一条评论上会出现"解决"按钮和更多菜单（编辑、重新打开、删除整条评论），选中的那条一直显示；编辑和删除确认都在这一行里展开。在面板菜单里按 Escape 只关菜单。
+
+### 文档
+- `dsh-plugins/README.zh-CN.md`：按插件名安装、使用、更新、卸载和常见问题。
+
+### 维护
+- 打版本 tag 时，由 GitHub Actions 把 DeepSeek Harness 插件发布到 npm。
+
 ## 2.3.0 - 2026-10-30
 
 ### 变更

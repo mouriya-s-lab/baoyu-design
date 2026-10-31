@@ -9,9 +9,9 @@ https://github.com/user-attachments/assets/d5b4f39b-a701-49de-87b8-64f3c6ef9c61
 
 [English](README.md) · [简体中文](README.zh-CN.md) · [更新日志](CHANGELOG.zh.md)
 
-![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg) ![Best with Opus 5.5](https://img.shields.io/badge/Best%20with-Opus%205.5-d97757) ![Harness](https://img.shields.io/badge/Cursor%20%C2%B7%20Claude%20Code%20%C2%B7%20Codex-supported-1f6feb)
+[![许可：自有代码 MIT，详见 NOTICE](https://img.shields.io/badge/License-MIT%20for%20own%20code%20%C2%B7%20see%20NOTICE-blue.svg)](NOTICE.md) ![Best with Opus 5.5](https://img.shields.io/badge/Best%20with-Opus%205.5-d97757) ![Harness](https://img.shields.io/badge/Cursor%20%C2%B7%20Claude%20Code%20%C2%B7%20Codex-supported-1f6feb)
 
-本仓库把 claude.ai 的 **Artifact 类型**搬到本地 Agent 上：可编辑的幻灯片、设计画布、设计系统和数据仪表盘，每一种都用它自己的编辑器打开，编辑器就运行在你的电脑上。第五个技能 `dataviz` 是一份图表指南：Agent 在画任何图表之前先读它，不管是在这几个技能里还是别处。
+本仓库把 claude.ai 的 **Artifact 类型**搬到本地 Agent 上：可编辑的幻灯片、设计画布、设计系统和数据仪表盘，每一种都用它自己的编辑器打开，编辑器就运行在你的电脑上。第五个技能 `dataviz` 是一份图表指南：Agent 在画任何图表之前先读它，不管是在这几个技能里还是别处。四个编辑器也做成了 [DeepSeek Harness 插件](#deepseek-harness-插件)，按包名从 npm 安装。
 
 原来的 `baoyu-design` 技能（以自包含 HTML 产出 UI 稿和原型）已归档到 [`archive/baoyu-design/`](archive/baoyu-design/)。
 
@@ -76,6 +76,45 @@ node skills/claude-slides/scripts/artifact.mjs list                             
 
 ---
 
+## DeepSeek Harness 插件
+
+四个编辑器技能也做成了 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 插件，发布在 npm 上。每个插件带着本仓库发布的那份技能，连同预先构建好的编辑器，让 Claude Design 这几个编辑器跑在你的 DeepSeek Agent 上。
+
+| npm 包名 | 加入的技能 | 版本 |
+|---|---|---|
+| [`dsh-claude-slides`](https://www.npmjs.com/package/dsh-claude-slides) | `/claude-slides`：幻灯片 | [![npm](https://img.shields.io/npm/v/dsh-claude-slides)](https://www.npmjs.com/package/dsh-claude-slides) |
+| [`dsh-claude-design`](https://www.npmjs.com/package/dsh-claude-design) | `/claude-design`：设计画布 | [![npm](https://img.shields.io/npm/v/dsh-claude-design)](https://www.npmjs.com/package/dsh-claude-design) |
+| [`dsh-claude-design-system`](https://www.npmjs.com/package/dsh-claude-design-system) | `/claude-design-system`：设计系统 | [![npm](https://img.shields.io/npm/v/dsh-claude-design-system)](https://www.npmjs.com/package/dsh-claude-design-system) |
+| [`dsh-claude-dashboard`](https://www.npmjs.com/package/dsh-claude-dashboard) | `/claude-dashboard`：数据仪表盘 | [![npm](https://img.shields.io/npm/v/dsh-claude-dashboard)](https://www.npmjs.com/package/dsh-claude-dashboard) |
+
+幻灯片、画布和设计系统编辑器里的评论可以直接交给 Agent：Agent 每次打开编辑器，插件都会开始等评论。在页面上标注，勾选 **Send to agent**，Agent 就会醒来，读你的评论，改好页面，再在评论串里回复你。评论也会以卡片的形式出现在对话里。
+
+### 从 npm 安装
+
+只需要 DeepSeek Harness 桌面版，不用克隆仓库，也不用构建。应用会从 npm 下载插件（连不上 npm 时改从 npmmirror 镜像下载），用它自带的 Node.js 运行。
+
+1. 在应用里打开 **Plugins** → **Add plugin**。
+2. 在 **Package name or address** 一栏填表里的包名，比如 `dsh-claude-design`，点 **Install**。插件的开关没开就打开。要装几个就重复几次。
+3. 退出应用再重新打开，然后新开一个会话，直接说要幻灯片、画布、设计系统或仪表盘，或者输入 `/claude-design`（`/claude-slides` 等）。
+
+用命令行装到某个 CLI profile（比如 `web`）：
+
+```bash
+dsh plugin --profile web add dsh-claude-design
+```
+
+**从「发现」安装。** 应用的实验功能「发现」（Discover）可以列出这些插件，点一下就装，有新版本时也会标出来。在插件页点 **Experimental plugins**（实验性插件）旁边的 **More**（更多），打开 **Custom plugin markets**（自定义插件市场）；再到「发现」里点 **Add index source**（添加索引源），加上这个索引：
+
+```text
+https://jimliu.github.io/baoyu-design/dsh-plugins/index.json
+```
+
+**更新。** 应用不会自动更新插件；加了索引以后，「发现」会把有新版本的插件标成 **Update available**（有新版本）。在插件页卸载插件，再从「发现」或按包名重新安装，然后退出应用再重新打开。新版本发布后的一天内，按包名装到的还是上一个版本；从「发现」安装能马上装到新版本，在包名后面加上版本号也可以，比如 `dsh-claude-design@2.4.0`（版本号见 [更新日志](CHANGELOG.zh.md)）。
+
+工作区里如果有自己的同名技能（在 `.agents/skills/` 或 `.dsh/skills/` 下），会用那一份，不用插件里的。一步一步的安装（包括从文件夹安装）、使用、更新、卸载和常见问题，见 [`dsh-plugins/`](dsh-plugins/README.zh-CN.md)。
+
+---
+
 ## 为什么在本地跑
 
 - **摆脱对网站的依赖。** 不必离开编辑器，就能用上 `claude.ai/design` 绝大部分的功能 —— 同一套方法论、同样的工艺标准、同样的产出格式。
@@ -86,6 +125,8 @@ node skills/claude-slides/scripts/artifact.mjs list                             
 ---
 
 ## 快速开始
+
+用 DeepSeek Harness 桌面版的话，不用看这一节，直接 [从 npm 安装插件](#从-npm-安装)。
 
 ### 前置条件
 
@@ -162,4 +203,10 @@ Agent 会 clone 或抓取该仓库、加载 `SKILL.md` 然后开干 —— 临�
 
 本项目把 **Anthropic** 出品的 claude.ai Artifact 类型和设计技能重新打包，使其得以在本地 Agent 上运行。这是一个独立的社区项目，与 Anthropic 无隶属或背书关系。
 
-由 **Jim Liu 宝玉** 重新打包并维护。基于 [MIT 许可证](LICENSE) 发布。
+由 **Jim Liu 宝玉** 重新打包并维护。仓库里的内容分三类，许可各不相同，详见 [NOTICE.md](NOTICE.md)：
+
+- **维护者自己写的部分**（本地命令行和编辑器服务器、本地评论、DeepSeek Harness 插件的代码、文档）基于 [MIT 许可证](LICENSE) 发布。
+- **取自 Anthropic 的部分**权利归 Anthropic，不适用 MIT 许可，本项目也不授予任何许可。包括改编自 Artifact 类型的技能说明和参考文档、`dataviz` 技能、从 claude.ai 还原的编辑器、Anthropicons 图标字体，以及 `archive/` 里的 Claude Design 系统提示词、内置技能和起步组件。归档的 `frontend-design` 内置技能取自 Anthropic 以 Apache 2.0 发布的技能，许可全文放在它旁边。
+- **第三方开源代码**（编辑器里打进去的开源包）各按原许可，清单在各编辑器的 `scripts/editor/third-party-licenses.txt`。
+
+npm 上的 DeepSeek Harness 插件也带着同样的 `LICENSE` 和 `NOTICE.md`。

@@ -9,9 +9,9 @@ https://github.com/user-attachments/assets/d5b4f39b-a701-49de-87b8-64f3c6ef9c61
 
 [English](README.md) · [简体中文](README.zh-CN.md) · [Changelog](CHANGELOG.md)
 
-![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg) ![Best with Opus 5.5](https://img.shields.io/badge/Best%20with-Opus%205.5-d97757) ![Harness](https://img.shields.io/badge/Cursor%20%C2%B7%20Claude%20Code%20%C2%B7%20Codex-supported-1f6feb)
+[![License: MIT for own code, see NOTICE](https://img.shields.io/badge/License-MIT%20for%20own%20code%20%C2%B7%20see%20NOTICE-blue.svg)](NOTICE.md) ![Best with Opus 5.5](https://img.shields.io/badge/Best%20with-Opus%205.5-d97757) ![Harness](https://img.shields.io/badge/Cursor%20%C2%B7%20Claude%20Code%20%C2%B7%20Codex-supported-1f6feb)
 
-This repo brings claude.ai's **Artifact types** to local agents: editable slide decks, design canvases, design systems and data dashboards, each opened in its own editor that runs on your machine. A fifth skill, `dataviz`, is the chart guide the agent reads before it draws any chart, in these skills or anywhere else.
+This repo brings claude.ai's **Artifact types** to local agents: editable slide decks, design canvases, design systems and data dashboards, each opened in its own editor that runs on your machine. A fifth skill, `dataviz`, is the chart guide the agent reads before it draws any chart, in these skills or anywhere else. The four editors also ship as [DeepSeek Harness plugins](#deepseek-harness-plugins), installed from npm by name.
 
 The original `baoyu-design` skill (self‑contained HTML mockups and prototypes) has been archived to [`archive/baoyu-design/`](archive/baoyu-design/).
 
@@ -76,6 +76,45 @@ A dashboard is written through the same script (`write-db`, `read-db`, `upload`,
 
 ---
 
+## DeepSeek Harness plugins
+
+The four editor skills also come as [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) plugins, published on npm. Each plugin carries its skill exactly as this repo publishes it, prebuilt editor included, so Claude Design and the other editors run on your DeepSeek agent.
+
+| npm package | Adds | Version |
+|---|---|---|
+| [`dsh-claude-slides`](https://www.npmjs.com/package/dsh-claude-slides) | `/claude-slides`: slide decks | [![npm](https://img.shields.io/npm/v/dsh-claude-slides)](https://www.npmjs.com/package/dsh-claude-slides) |
+| [`dsh-claude-design`](https://www.npmjs.com/package/dsh-claude-design) | `/claude-design`: a canvas of artboards | [![npm](https://img.shields.io/npm/v/dsh-claude-design)](https://www.npmjs.com/package/dsh-claude-design) |
+| [`dsh-claude-design-system`](https://www.npmjs.com/package/dsh-claude-design-system) | `/claude-design-system`: design systems | [![npm](https://img.shields.io/npm/v/dsh-claude-design-system)](https://www.npmjs.com/package/dsh-claude-design-system) |
+| [`dsh-claude-dashboard`](https://www.npmjs.com/package/dsh-claude-dashboard) | `/claude-dashboard`: data‑backed dashboards | [![npm](https://img.shields.io/npm/v/dsh-claude-dashboard)](https://www.npmjs.com/package/dsh-claude-dashboard) |
+
+In the slides, canvas and design-system editors, a comment goes straight to the agent: whenever the agent opens an editor, the plugin waits for comments. Mark up the page, tick **Send to agent**, and the agent wakes up, reads your comment, makes the change and replies in the comment thread. The comment also shows in the chat as a card.
+
+### Install from npm
+
+All you need is the DeepSeek Harness desktop app: no repo to clone, nothing to build. The app downloads the plugin from npm (or from the npmmirror registry when npm is out of reach) and runs it on the Node.js it ships with.
+
+1. In the app, open **Plugins** → **Add plugin**.
+2. Enter a package name from the table, such as `dsh-claude-design`, in **Package name or address**, and click **Install**. If the plugin's switch is off, turn it on. Repeat for each plugin you want.
+3. Quit and reopen the app, then start a new session and ask for a deck, a canvas, a design system or a dashboard, or type `/claude-design` (`/claude-slides` and so on).
+
+To install into a CLI profile, such as `web`:
+
+```bash
+dsh plugin --profile web add dsh-claude-design
+```
+
+**From the Discover tab.** The app's experimental Discover tab can list the plugins, install them with a click and show when an update is out. On the Plugins page, click **More** beside **Experimental plugins** and switch on **Custom plugin markets**; then in **Discover**, click **Add index source** and add this index:
+
+```text
+https://jimliu.github.io/baoyu-design/dsh-plugins/index.json
+```
+
+**Updating.** The app doesn't update plugins by itself; with the index added, Discover marks a plugin **Update available**. On the Plugins page, uninstall the plugin, install it again from Discover or by name, then quit and reopen the app. For a day after a release, adding by name still gets the previous version; Discover gets the new one right away, and so does entering the name with the version, such as `dsh-claude-design@2.4.0` (the versions are in the [changelog](CHANGELOG.md)).
+
+A workspace that has its own copy of a skill (in `.agents/skills/` or `.dsh/skills/`) uses that copy instead of the plugin's. Step by step, with installing from a folder, uninstalling and what to do when something doesn't work: [`dsh-plugins/`](dsh-plugins/README.md).
+
+---
+
 ## Why run it locally
 
 - **Free yourself from the website.** You get the vast majority of `claude.ai/design`'s capabilities without ever leaving your editor — same methodology, same craft standards, same output format.
@@ -86,6 +125,8 @@ A dashboard is written through the same script (`write-db`, `read-db`, `upload`,
 ---
 
 ## Quick start
+
+Using the DeepSeek Harness app? You don't need this section: [install the plugins from npm](#install-from-npm).
 
 ### Prerequisites
 
@@ -162,4 +203,10 @@ For best results, **give it design context** — a screenshot, a UI kit, a desig
 
 This project repackages **Anthropic**'s claude.ai Artifact types and design skills so they can run on local agents. It is an independent, community effort and is not affiliated with or endorsed by Anthropic.
 
-Repackaged and maintained by **Jim Liu 宝玉**. Released under the [MIT License](LICENSE).
+Repackaged and maintained by **Jim Liu 宝玉**. The repository holds material under three sets of terms, set out in [NOTICE.md](NOTICE.md):
+
+- **The maintainer's own work** (the local command line and editor server, the local comments, the DeepSeek Harness plugin code, the docs) is under the [MIT License](LICENSE).
+- **Material from Anthropic** stays Anthropic's and is not under the MIT License; this project grants no license to it. That covers the skill instructions and reference docs adapted from the Artifact types, the `dataviz` skill, the editors reconstructed from claude.ai, the Anthropicons icon fonts, and the Claude Design system prompt, built-in skills and starter components in `archive/`. The archived `frontend-design` built-in skill is Anthropic's Apache 2.0 skill, with its license beside it.
+- **Third-party open-source code** bundled in the editors keeps its own license, listed in each editor's `scripts/editor/third-party-licenses.txt`.
+
+The DeepSeek Harness plugins on npm ship the same `LICENSE` and `NOTICE.md`.
