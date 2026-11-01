@@ -4,6 +4,45 @@
 
 本文档记录 `baoyu-design` 的重要变更。
 
+## 2.6.1 - 2026-11-01
+
+### 修复
+- `claude-dashboard`：你正在编辑页面时别人先存了，页面提示 "This dashboard changed. Save to overwrite that change"，你再点 **Save**，现在算你自己选的覆盖，和幻灯片里的**保留我的**一样。History 里这一版标 "Saved over <名字>'s change"，对方收到的提醒说你保存时盖掉了他的修改（不再是"紧接着也改了"那种），你自己不收提醒。改的是不同的行照旧合并、两边都留；**找回**也照旧只找回被换掉的那几行。
+
+## 2.6.0 - 2026-11-01
+
+### 新功能
+- `claude-slides`、`claude-design`、`claude-design-system` 和 `claude-dashboard` 有了版本历史：每一次修改都存成一个版本，放在项目的 `history/` 文件夹里，记着是谁改的（访客按他加入时填的名字，主人，或者 **Agent**，指直接改这台电脑上的文件）。Share 旁边的 **History** 按钮按天列出所有版本；点开一个版本能逐行看它改了什么，预览当时的整体样子，或者把整个版本（也可以只挑其中一处）恢复成一个新版本。
+- 一个人的保存盖掉了另一个人的修改时，这个版本会记下它覆盖了谁，被盖的人会收到提醒，可以**看看差别**、一键**找回**。找回的只是被盖掉的那部分，对方别处的修改照样留着。
+- 谁在这儿：别人开着同一个页面时，他们的头像排在 History 旁边。在幻灯片和画布编辑器里，能看到每个人在第几页、哪块画板、是不是正在改，页面上也有他们的光标和选中框；有人开始改你正在看的地方，会弹一句提醒。什么都不会锁住。Agent 改了文件之后，也会在这一排里出现一会儿。
+- 在幻灯片、设计稿和设计系统编辑器里，别人保存后你的页面就地更新，不再整页刷新。
+- 两个人改同一页、同一块画板或同一个文件：先合并，画布按元素，幻灯片和设计系统的文件按行（token 文件按 token），改的是不同的元素或不同的行，两边都留着。合不了（比如改到同一行）才出一条提示，让你选用他的、保留你的，还是两份都留。
+- `claude-dashboard`：页面写入时和别人这期间存的内容合并，按字段合，页面文件按行合；只有改到同一个值才发提醒。编辑页面时，保存以草稿开始时的那一版为准。
+- Agent 统一叫 **Agent**，用机器人头像：History、头像一排和评论按钮（**Send to Agent**）里都是。
+
+### 修复
+- 开着 TUN 模式代理时 `open` 能用了：代理的网卡在每个端口上都有应答，`open` 以前会报 `PORT_IN_USE`；分享链接里也不再列出那块网卡的地址（[#23](https://github.com/JimLiu/baoyu-design/issues/23)）。
+- `comments --wait --timeout` 不会再随机以 `SERVER_GONE`（"The value of \"delay\" is out of range"）退出。
+- DeepSeek Harness 插件：Agent 通过 shell 变量运行 `open` 时，也会开始等待评论；Agent 还在干活时发来的评论，等这一轮做完再交给它，不会中途插进来。
+
+### 文档
+- 每个编辑器的 `SKILL.md` 都加了 History 一节：版本存在哪里、提醒是什么意思、有人问谁改了什么时怎么读 `history/index.json`。README 介绍了版本历史、覆盖提醒、谁在这儿和合并。
+
+## 2.5.0 - 2026-10-31
+
+### 新功能
+- 局域网分享：`claude-slides`、`claude-design`、`claude-design-system` 和 `claude-dashboard` 可以把项目开放到同一个 Wi‑Fi 或内网。`share <root>`（或 `open <root> --lan`）给每种角色打印一个链接：`editor` 能改也能评论，`commenter` 只能评论，`viewer` 只能看。拿到链接的人输个名字就能进来；一个人保存，其他打开的页面马上跟着变，每条评论记在写它的人名下。DeepSeek Harness 插件也一样带上了。
+- 坐在这台电脑前的主人有一个仿照 claude.ai 分享对话框的 **Share** 按钮：谁加入了、谁在线，每个人的角色菜单和移除，访问范围（只有这台电脑，或网络里拿到链接的人），每个链接的复制、关闭和重置。命令行里也能做：`share <root> --disable <角色>`、`--enable <角色>`、`--reset <角色>`、`--role <访客>=<角色>`、`--off`。
+- 访客也有 Share 按钮：里面是他可以转发的链接（自己这一级和更低的角色），以及复制当前页面地址的 Copy link，只有有权限的人打得开，其他人看到 "No access" 页。
+- 角色处处生效：commenter 和 viewer 看到的是编辑器的只读模式，viewer 只能看评论，只有作者能改自己的消息，只有主人能把评论发给 Agent。仪表盘上主人和 editor 能写数据，commenter 和 viewer 什么都写不了，连自己的 `data/users` 也不行。
+- 每个技能的服务器有自己的端口：slides 4710、design 4720、design system 4730、dashboard 4740，被占用时顺延到下一个空闲端口。`--port n` 从 n 开始找，`--port 0` 随便取一个空闲端口。
+- `claude-design-system`：评论和 Share 放在页面顶部的一条栏里，和 claude.ai 的 artifact 页头一样。
+- `claude-dashboard`：页面的地址是 `/dashboard/<id>/`，重启后不变，开着的旧标签页不会显示后来占了这个端口的别的文件夹。
+- Share 按钮跟着所在工具栏的样式走，浅色和深色模式都一样。
+
+### 文档
+- 每个编辑器的 `SKILL.md` 都加了 Sharing 一节。README 介绍了局域网分享，并把仪表盘页面列进支持评论的页面。
+
 ## 2.4.1 - 2026-10-31
 
 ### 新功能
