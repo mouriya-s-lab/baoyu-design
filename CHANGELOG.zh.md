@@ -4,6 +4,16 @@
 
 本文档记录 `baoyu-design` 的重要变更。
 
+## 2.9.2 - 2026-11-04
+
+### 修复
+- Windows 上的 DeepSeek Harness：技能告诉 agent 运行的命令是按 POSIX shell 写的，而 PowerShell 会把行首带引号的路径当成字符串，不当成命令。现在 Windows 上给的是 `& '<node>' '<script>' <command>`，并说明 PowerShell 没有 heredoc。
+
+## 2.9.1 - 2026-11-04
+
+### 修复
+- Windows 上的 DeepSeek Harness：插件只认名叫 `bash` 的 shell 工具，而它在 Windows 上叫 `pwsh`，所以一直注意不到 `open`。文件夹不会出现在作品页，**Send to Agent** 不出现，评论也到不了 Agent。现在两个名字都认（by @leil894-collab，[#31](https://github.com/JimLiu/baoyu-design/pull/31)；@EmotionTowel 报告，[#30](https://github.com/JimLiu/baoyu-design/issues/30)）。
+
 ## 2.9.0 - 2026-11-03
 
 ### 新功能

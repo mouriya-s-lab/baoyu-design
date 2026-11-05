@@ -4,6 +4,16 @@ English | [中文](./CHANGELOG.zh.md)
 
 All notable changes to `baoyu-design` are tracked in this file.
 
+## 2.9.2 - 2026-11-04
+
+### Fixes
+- DeepSeek Harness on Windows: the command the skills told the agent to run was written for a POSIX shell, and PowerShell reads a quoted path at the start of a line as a string, not a command. On Windows they now give `& '<node>' '<script>' <command>`, and say that PowerShell has no heredoc.
+
+## 2.9.1 - 2026-11-04
+
+### Fixes
+- DeepSeek Harness on Windows: the plugins only recognized a shell tool named `bash`, and on Windows it is named `pwsh`, so they never noticed an `open`. The folder stayed off the **Artifacts** page, **Send to Agent** never appeared, and comments did not reach the agent. They now recognize both names (by @leil894-collab, [#31](https://github.com/JimLiu/baoyu-design/pull/31); reported by @EmotionTowel, [#30](https://github.com/JimLiu/baoyu-design/issues/30)).
+
 ## 2.9.0 - 2026-11-03
 
 ### Features
