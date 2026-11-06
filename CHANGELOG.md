@@ -4,6 +4,40 @@ English | [中文](./CHANGELOG.zh.md)
 
 All notable changes to `baoyu-design` are tracked in this file.
 
+## 2.11.1 - 2026-11-05
+
+### Features
+- **DeepSeek Harness: the Artifacts page offers the plugins you haven't installed.** Beside the tiles for the skills you have, each other baoyu-design plugin gets a dimmed tile marked **Not installed**. Click it to see what the plugin makes and install it from there, at the same version as the ones you have, usually without a restart. Once it's in, **Start** opens a session with the skill. In an app that can't install from the page, the tile points you to the Plugins page. A plugin you installed and switched off still gets no tile.
+
+### Fixes
+- With `--agent-hook`, a comment could reach the agent twice: a second send could start the hook again after the first run had finished but before the comment was marked sent.
+
+## 2.11.0 - 2026-11-05
+
+### Features
+- **DeepSeek Harness: a new version no longer pops up over the app.** The **Artifacts** row in the left sidebar gets an **Update** label instead (a dot on the icon, where a collapsed sidebar keeps its icons), and a panel at the top of the Artifacts page shows the versions, each plugin and what the release changes. **Update all** updates them together; **Update** on a plugin's line takes just that one. **Later** folds the panel to one line and removes the label until the next version.
+- While an update runs you can leave the Artifacts page: the label says **Updating**, **Failed** or **Restart**. **Try again** picks up where it stopped: the rest after **Update all**, that plugin after its own **Update**.
+- The **Update** button on a plugin's page now updates only that plugin, and a page that was open when its plugin was replaced comes back by itself.
+
+## 2.10.1 - 2026-11-05
+
+### Fixes
+- DeepSeek Harness 0.2.2 has its own plugin updates, so a plugin's page showed two update buttons and two tags, the app's and the plugin's. It now shows one: the app's for a plugin the card hasn't updated, the plugin's own for one it has.
+- The one-click update looks again at what there is to update before it starts, so a plugin the app's button just updated isn't tried again. When the reply to an update is lost, the card no longer says the plugin stayed on its version: it asks you to check on the Plugins page.
+- The [how-to](dsh-plugins/README.md#if-something-doesnt-work) says what to do when the app's own **Update to x** fails on the second of two plugins and switches it off, and that 2.9.2 and earlier can use that button on DeepSeek Harness 0.2.2 instead of updating by hand.
+
+## 2.10.0 - 2026-11-05
+
+### Features
+- **The DeepSeek Harness plugins update in one click.** When a new version is out, the app offers it: a card at the bottom right, a line at the top of the **Artifacts** page, and an **Update** button on each plugin's page. One click updates the plugins together, with nothing to uninstall, and most updates need no restart. If an update fails, the plugin stays on the version it was. A plugin added from a folder isn't offered one. This starts with 2.10.0, so 2.9.2 and earlier need [one last update by hand](dsh-plugins/README.md#update).
+- **DeepSeek Harness: a skill can be kept to one agent preset.** Turn off the plugin's own row and declare the plugin in the preset, and `/` lists the skill only in that preset's sessions. The **Artifacts** page and comments keep working, through a new package, `dsh-claude-artifacts`, that each plugin installs with it. See [how to set it up](dsh-plugins/README.md#keep-a-skill-to-one-preset).
+
+### Fixes
+- `archive` and the **Whole folder** export zipped `.git`, including the remote's address and any token in it, and that zip is what gets sent to other people. `.git` now stays out, at any depth.
+- An artifact folder's default `.gitignore` took `exports/` (a film's MP4 too) and two of the three temp file shapes into git, and its `history/` rule also matched a project's own folder of that name, which git then dropped. `history/` and `exports/` now match only at the top of the folder.
+- `share` could give out a TUN proxy's address, such as sing-box's `172.19.0.1`, first when the system lists it first. It now skips an address that answers at every port, and lists tunnels after the local network.
+- Design's Standalone export: a `#id` link did nothing when the file was opened directly, and over `http://` it also scrolled the page around the frame. A click now scrolls inside the frame only, as Play does.
+
 ## 2.9.2 - 2026-11-04
 
 ### Fixes

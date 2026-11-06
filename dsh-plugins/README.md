@@ -89,7 +89,7 @@ workspace and ask the agent to open it again; it starts the editor and gives you
 
 On that page you can also:
 
-- **Start something new.** Click a tile at the top (Slides, Design, Dashboard, …) or **+** at the top right. The app starts a new session with the input filled in (`/claude-slides Make me a slide deck about: `, say); finish the sentence and send it, and the agent uses that skill. Only plugins that are on have a tile.
+- **Start something new.** Click a tile at the top (Slides, Design, Dashboard, …) or **+** at the top right. The app starts a new session with the input filled in (`/claude-slides Make me a slide deck about: `, say); finish the sentence and send it, and the agent uses that skill. A plugin you have not installed yet has a dimmed tile marked **Not installed**: click it to see what the plugin does, and **Install** to add it without leaving the page (where the app cannot install from there, the tile tells you to use the Plugins page). Once it is in, its tile works like the others; if the app asks for a restart, quit and reopen it. A plugin you switched off has no tile.
 - **See thumbnails.** The desktop app opens each artifact's editor once to take its picture, and takes it again when you come back after its files changed. `dsh web` cannot take pictures, so its cards show a drawing of the type.
 - **Change the view, search, sort and filter.** The buttons at the top right switch between a grid and a list, search by title, conversation or path, sort by last opened, last edited, date created or name, and filter by type, date opened, sharing or pinned.
 - **Pin, rename, copy the link, delete.** Hover over an artifact and click **…** (while the menu is open, P, R and C work too). Rename changes the title in the editor. The link is the editor's address on this computer, and the editor stays running. Delete moves the folder to `baoyu-design/trash/` in the app's data folder (`~/.dsh` by default); the message that follows has an Undo, and you can delete it for good there. A folder that holds other files too is only taken off the page, and stays where it is.
@@ -145,23 +145,33 @@ still reach the agent.
 
 ## Update
 
-When a new version is out, the app tells you: a card pops up at the bottom right, and an **Update** button shows at the top of
-the Artifacts page and on each plugin's page. One click updates these plugins together, with nothing to uninstall or install
-again.
+When a new version is out, the app doesn't interrupt you: the **Artifacts** row in the left sidebar gets an **Update** label (a
+small dot on the icon, where a collapsed sidebar keeps its icons). Open the Artifacts page: the top says which version it is, lists
+the plugins that have it and says what changed. **Update all** updates them together, with nothing to uninstall or install again,
+and it's what you normally want. To take just one, click **Update** on its line; the others stay on offer, and the app may then ask
+for a restart, since plugins on two versions can't always share what they share. With one plugin there's no list, and the button
+just says **Update**.
 
 - **When it looks.** Once when the app opens, then every 6 hours while it stays open. It asks the npm registry you install
   plugins from, and the npmmirror mirror when that can't be reached.
-- **Afterwards.** New sessions use the new version. If the card says to quit and reopen the app, do that.
-- **Not now.** Click **Later** on the card and it doesn't come back for this version. The buttons on the Artifacts page and the
-  plugin's page stay.
-- **If it fails.** A plugin that didn't update stays on the version it was. The card says why, and **Try again** updates what is
-  left.
+- **While it runs.** You can leave the Artifacts page: the label in the sidebar says **Updating**.
+- **Afterwards.** New sessions use the new version. If the label says **Restart**, and the page says the same, quit and reopen the
+  app.
+- **Not now.** Click **Later**: the label goes away for this version and the Artifacts page keeps one line, with **Show** to open it
+  again. The next version is offered as usual.
+- **If it fails.** The label says **Failed**. The Artifacts page says why and where the plugin stands, and **Try again** picks up
+  where it stopped: the rest after **Update all**, that plugin after its own **Update**.
 
-After an update, **Code source** on the plugin's page shows a `.tgz` address. That's expected. What changed in each version is in
-the [changelog](../CHANGELOG.md).
+After an update, **Code source** on the plugin's page shows a `.tgz` address. That's expected, and the Artifacts page keeps offering
+that plugin updates. What changed in each version is in the [changelog](../CHANGELOG.md).
 
-**Updating by hand.** Versions 2.9.2 and earlier don't have this, so they need one update by hand. So does installing a particular
-version:
+**The button on the plugin's page.** From DeepSeek Harness 0.2.2 the app has its own **Update to x** there, which can also pick another
+version. A plugin the Artifacts page hasn't updated shows that one; a plugin it has updated shows the plugin's own **Update**, which
+updates just that plugin. There is only ever one. **With two plugins installed, use the Artifacts page**: updating them one by one with
+the app's button fails on the second. See [If something doesn't work](#if-something-doesnt-work).
+
+**Updating by hand.** Versions 2.9.2 and earlier don't offer new versions. From DeepSeek Harness 0.2.2, open the plugin's page and click
+**Update to x**. On older apps they need one update by hand:
 
 1. On the Plugins page, open the plugin and click **Uninstall**. The decks, designs, dashboards and films you made stay in their
    workspace folders.
@@ -198,6 +208,9 @@ workspace folders.
   itself.
 - **The app says the plugin is already installed.** To install it again, uninstall it first. Updating doesn't need that: see
   [Update](#update).
+- **Update to x on the plugin's page says other configuration still uses this bundle's components, and the plugin is switched off.** That
+  happens on the second plugin when you update two one by one. Your files aren't touched. Turn its switch on, click **Update** on the Artifacts
+  page, then quit and reopen the app when it says to.
 - **No update is offered.** After a release reaches npm, the app finds it the next time it opens, or within 6 hours. It can't look
   when neither npm nor npmmirror can be reached, and a plugin added from a folder isn't offered one.
 - **The link doesn't load, or Send to Agent is missing.** This happens after the app restarts or the plugins update, for example. Ask the
