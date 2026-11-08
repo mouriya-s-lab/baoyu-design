@@ -4,6 +4,12 @@ English | [中文](./CHANGELOG.zh.md)
 
 All notable changes to `baoyu-design` are tracked in this file.
 
+## 2.12.1 - 2026-11-07
+
+### Fixes
+- **A long comment thread no longer runs off the bottom of the window.** The open card used to have no height limit, so the last replies and the reply box could be out of reach. In every editor it now stops at 60% of the window (never under 320px, and never taller than the room on the side it opens toward). The comments scroll inside it and the reply box stays below. After you reply, the thread follows to your reply; a long reply from the agent lines up at its top, and scrolling up stops the following (reported by @congee949, [#34](https://github.com/JimLiu/baoyu-design/issues/34)).
+- **`claude-design` and `claude-slides` opened on their own now keep the address bar on where you are.** Under `open` or DeepSeek Harness's browser there is no claude.ai frame to do it, so switching pages or slides left the address as it was, a pasted `#page-…` or `#slide-…` link did nothing once the page had loaded, and **Copy link to page** and **Copy link to slide** could not copy. In `claude-design` the address now names the page, switching to another page adds a history entry (up to 20), and Back and Forward move between them. In `claude-slides` the address follows the current slide without filling the history. Both follow a changed address to its place, and the copy shortcuts copy the page's address with the place in it and say **Link copied.** On claude.ai nothing changes. This is the address part of [#33](https://github.com/JimLiu/baoyu-design/issues/33), reported by @congee949; the previous/next page buttons and page keys it asks for are not in this release.
+
 ## 2.12.0 - 2026-11-06
 
 ### Features

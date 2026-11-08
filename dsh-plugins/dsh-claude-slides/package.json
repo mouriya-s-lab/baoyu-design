@@ -1,6 +1,6 @@
 {
   "name": "dsh-claude-slides",
-  "version": "2.12.0",
+  "version": "2.12.1",
   "description": "DeepSeek Harness plugin: the claude-slides skill from baoyu-design. The agent writes editable slide decks as files and opens them in a local slide editor.",
   "keywords": [
     "dsh",
@@ -23,6 +23,12 @@
   "icon": "./icon.svg",
   "baoyuDesign": {
     "releaseNotes": [
+      {
+        "version": "2.12.1",
+        "date": "2026-11-07",
+        "en": "### Fixes\n- **A long comment thread no longer runs off the bottom of the window.** The open card used to have no height limit, so the last replies and the reply box could be out of reach. In every editor it now stops at 60% of the window (never under 320px, and never taller than the room on the side it opens toward). The comments scroll inside it and the reply box stays below. After you reply, the thread follows to your reply; a long reply from the agent lines up at its top, and scrolling up stops the following (reported by @congee949, [#34](https://github.com/JimLiu/baoyu-design/issues/34)).\n- **`claude-design` and `claude-slides` opened on their own now keep the address bar on where you are.** Under `open` or DeepSeek Harness's browser there is no claude.ai frame to do it, so switching pages or slides left the address as it was, a pasted `#page-…` or `#slide-…` link did nothing once the page had loaded, and **Copy link to page** and **Copy link to slide** could not copy. In `claude-design` the address now names the page, switching to another page adds a history entry (up to 20), and Back and Forward move between them. In `claude-slides` the address follows the current slide without filling the history. Both follow a changed address to its place, and the copy shortcuts copy the page's address with the place in it and say **Link copied.** On claude.ai nothing changes. This is the address part of [#33](https://github.com/JimLiu/baoyu-design/issues/33), reported by @congee949; the previous/next page buttons and page keys it asks for are not in this release.",
+        "zh": "### 修复\n- **很长的评论串不再顶出窗口下沿。** 以前打开的评论卡片没有高度上限，最后几条回复和回复框可能够不到。现在所有编辑器里，卡片最高是窗口的 60%（不低于 320px，也不超过它朝向那一侧的空间），评论在卡片里滚动，回复框固定在下面。你回复之后，评论串会跟到你的回复；Agent 的长回复从它的开头对齐，往上滚就不再跟随（@congee949 报告，[#34](https://github.com/JimLiu/baoyu-design/issues/34)）。\n- **单独打开的 `claude-design` 和 `claude-slides`，地址栏现在会跟着你所在的位置。** 用 `open` 或在 DeepSeek Harness 的浏览器里打开时，没有 claude.ai 的外层框架来做这件事：切页或切幻灯片，地址栏不变；贴一个 `#page-…` 或 `#slide-…` 的链接，页面加载之后没有反应；**Copy link to page**、**Copy link to slide** 复制不了。现在 `claude-design` 的地址栏写的是当前页，切到另一页会多一条历史记录（最多 20 条），后退、前进能在页之间来回；`claude-slides` 的地址栏跟着当前幻灯片走，但不往历史里添记录。地址被改成另一个位置时，两者都会跟过去；复制快捷键复制的是带着位置的本页地址，并提示 **Link copied.**。在 claude.ai 上没有变化。这是 [#33](https://github.com/JimLiu/baoyu-design/issues/33)（@congee949 报告）里地址栏的那部分，它要的上一页/下一页按钮和切页快捷键这个版本没有做。"
+      },
       {
         "version": "2.12.0",
         "date": "2026-11-06",
@@ -64,12 +70,6 @@
         "date": "2026-11-04",
         "en": "### Fixes\n- DeepSeek Harness on Windows: the plugins only recognized a shell tool named `bash`, and on Windows it is named `pwsh`, so they never noticed an `open`. The folder stayed off the **Artifacts** page, **Send to Agent** never appeared, and comments did not reach the agent. They now recognize both names (by @leil894-collab, [#31](https://github.com/JimLiu/baoyu-design/pull/31); reported by @EmotionTowel, [#30](https://github.com/JimLiu/baoyu-design/issues/30)).",
         "zh": "### 修复\n- Windows 上的 DeepSeek Harness：插件只认名叫 `bash` 的 shell 工具，而它在 Windows 上叫 `pwsh`，所以一直注意不到 `open`。文件夹不会出现在作品页，**Send to Agent** 不出现，评论也到不了 Agent。现在两个名字都认（by @leil894-collab，[#31](https://github.com/JimLiu/baoyu-design/pull/31)；@EmotionTowel 报告，[#30](https://github.com/JimLiu/baoyu-design/issues/30)）。"
-      },
-      {
-        "version": "2.9.0",
-        "date": "2026-11-03",
-        "en": "### Features\n- **ChatGPT plugins.** The skills now also come as plugins for the ChatGPT desktop app and Codex: Baoyu Slides, Baoyu Canvas, Baoyu Design System, Baoyu Dashboard, Baoyu Motion (with `motion-director` and `dataviz`) and Baoyu Dataviz. This repository is their marketplace: run `codex plugin marketplace add JimLiu/baoyu-design --sparse .agents/plugins --sparse chatgpt-plugins`, then install the ones you want. [chatgpt-plugins/README.md](chatgpt-plugins/README.md) has the steps.\n- DeepSeek Harness: each deck, canvas, design system, dashboard and film on the **Artifacts** page now has a real thumbnail, taken from its own editor and retaken when its files change. This needs the desktop app; in `dsh web` a card keeps a drawn picture of its type.\n- The **Artifacts** page's tiles and **+** menu start a new session with the input filled in, such as `/claude-slides Make me a slide deck about: `, and sending it loads that skill. Only plugins that are on get a tile.\n- The **Artifacts** page has grid and list views, search, sorting (last opened, last edited, date created, name) and filters (type, date opened, sharing, pinned).\n- Each card on the **Artifacts** page has a menu to pin, rename, copy the link or delete. Rename changes the title in the artifact itself, so its editor shows the new name. Delete moves the folder to `baoyu-design/trash/` in the app's data folder, with an Undo; a folder that also holds other files stays where it is and only leaves the list.\n\n### Fixes\n- In a sandbox that blocks local network, such as Codex's default one, `open` said `PORT_IN_USE`, as if every port were taken. It now says `NETWORK_BLOCKED` and how to run the command, and the skills say which commands need local network.",
-        "zh": "### 新功能\n- **ChatGPT 插件。** 这些技能也做成了 ChatGPT 桌面版和 Codex 的插件：Baoyu Slides、Baoyu Canvas、Baoyu Design System、Baoyu Dashboard、Baoyu Motion（带 `motion-director` 和 `dataviz`）和 Baoyu Dataviz。本仓库就是它们的 marketplace：运行 `codex plugin marketplace add JimLiu/baoyu-design --sparse .agents/plugins --sparse chatgpt-plugins`，再装你要的插件。步骤见 [chatgpt-plugins/README.zh-CN.md](chatgpt-plugins/README.zh-CN.md)。\n- DeepSeek Harness：**Artifacts** 页（中文界面是「作品」）上的幻灯片、画布、设计系统、仪表盘和影片现在都有真实的缩略图，从各自的编辑器里截取，文件改过后会重新截。这要在桌面版里；`dsh web` 的卡片仍然是画出来的类型示意图。\n- 作品页顶部的入口和 **+** 菜单会新开一个会话，并填好输入框，比如 `/claude-slides 帮我做一份幻灯片，主题是：`，发送时会加载对应的技能。只有开着的插件才有入口。\n- 作品页可以切换网格和列表，可以搜索、排序（最近打开、最近修改、创建时间、名称）和筛选（类型、打开时间、共享、已固定）。\n- 作品页的每张卡片都有菜单，可以固定、重命名、复制链接和删除。重命名改的是作品本身的标题，编辑器里也会显示新名字。删除会把文件夹移到应用数据目录的 `baoyu-design/trash/`，可以撤销；文件夹里还有别的文件时，文件夹留在原处，只从列表移除。\n\n### 修复\n- 在不允许访问本机网络的沙箱里（比如 Codex 的默认沙箱），`open` 会报 `PORT_IN_USE`，好像所有端口都被占了。现在它报 `NETWORK_BLOCKED`，并说明该怎么运行；技能说明里也写了哪些命令要访问本机网络。"
       }
     ]
   },
@@ -95,7 +95,7 @@
     "dsh": ">=0.2.0-0"
   },
   "dependencies": {
-    "dsh-claude-artifacts": "^2.12.0"
+    "dsh-claude-artifacts": "^2.12.1"
   },
   "dsh": {
     "bundle": {
