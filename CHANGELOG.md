@@ -4,6 +4,17 @@ English | [中文](./CHANGELOG.zh.md)
 
 All notable changes to `baoyu-design` are tracked in this file.
 
+## 2.12.2 - 2026-11-09
+
+### Features
+- **`claude-design`: Export → HTML for Figma.** Capturing the canvas, or the Standalone web page, with Figma's Chrome extension brought the artboards in as empty boxes, because each artboard is drawn inside a frame the extension does not look into. **HTML for Figma** (in the toolbar's Export, an artboard's Export and the Share panel's Export tab) saves `<title>.figma.html`: every artboard's rendered layers, placed where they are on the canvas, with their styles, fonts and images inside the file, and no frames and no scripts. Open it in Chrome and capture it with Figma's extension (**Capture page**, or **Select element** for one artboard). In an artboard's own Export it is that artboard alone. `SKILL.md` tells the agent how to answer when asked to bring a design into Figma (reported by @mufanmu, [#36](https://github.com/JimLiu/baoyu-design/issues/36)).
+
+### Fixes
+- **`claude-design`: PNG export no longer draws some icons as black or solid blocks.** An SVG icon drawn with `<use>` lost the `fill: none` and `stroke: currentColor` its class gave it, and came out filled in black; it now takes the colour of the `<use>`. An icon cut out with a CSS `mask-image` (on an element or on `::before` and `::after`) was drawn as a solid block because the mask's file was not in the exported image; masks are now embedded like background images (reported by @hh0592821, [#35](https://github.com/JimLiu/baoyu-design/issues/35)).
+- **`share` gives out the Wi-Fi's address first on a computer with a VPN, a proxy or a hotspot.** On Windows the links could start with the address of a proxy's virtual adapter (a sing-box TUN named `falemon-tun`, `172.19.0.1`), which nobody else on the network can reach. Addresses of adapters named like a tunnel (`falemon-tun`, OpenVPN's TAP, Wintun, anything with `vpn` in its name), of point-to-point links, and of networks this computer makes itself (the Mobile Hotspot's `192.168.137.1`, a virtual machine's or container's network) now come after the local network's. When a computer is on more than one network, `share` says that a link that does not open can be tried with another of the listed addresses (reported by @Bistard, [#37](https://github.com/JimLiu/baoyu-design/issues/37)).
+- **`open` no longer says the port is in use when a firewall or proxy filters `::1`.** A probe refused with `EACCES` or `EPERM` counted as an answer from something on the port, so `open` gave up on all 100 ports it tries.
+- A page whose skill folder was moved, renamed or removed while its server ran now says so, and names the folder to the owner, instead of telling them to reinstall the skill. A guest is told to ask whoever shared it.
+
 ## 2.12.1 - 2026-11-07
 
 ### Fixes

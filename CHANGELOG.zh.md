@@ -4,6 +4,17 @@
 
 本文档记录 `baoyu-design` 的重要变更。
 
+## 2.12.2 - 2026-11-09
+
+### 新功能
+- **`claude-design`：新增 Export → HTML for Figma。** 以前用 Figma 的 Chrome 扩展捕捉画布，或捕捉导出的 Standalone web page，画板进到 Figma 里都是空框，因为每个画板都画在一个框架（iframe）里，扩展看不进去。现在工具栏的 Export、画板自己的 Export 和 Share 面板的 Export 标签里都有 **HTML for Figma**，保存成 `<标题>.figma.html`：每个画板渲染出来的图层，摆在它们在画布上的位置，样式、字体和图片都在文件里，没有框架，也没有脚本。用 Chrome 打开这个文件，再用 Figma 的扩展捕捉（**Capture page**，只要一个画板就用 **Select element**）。画板自己的 Export 里，导出的只是这一个画板。`SKILL.md` 也写了用户要把设计带进 Figma 时 Agent 该怎么答（@mufanmu 报告，[#36](https://github.com/JimLiu/baoyu-design/issues/36)）。
+
+### 修复
+- **`claude-design`：PNG 导出不再把一部分图标画成黑色或实心块。** 用 `<use>` 画的 SVG 图标，会丢掉 class 给它的 `fill: none` 和 `stroke: currentColor`，导出来被涂成黑色，现在按 `<use>` 的颜色走。用 CSS `mask-image` 抠出来的图标（元素上的，或 `::before`、`::after` 上的）因为遮罩文件没进导出的图片，被画成一整块实心，现在遮罩像背景图一样嵌进去（@hh0592821 报告，[#35](https://github.com/JimLiu/baoyu-design/issues/35)）。
+- **装了 VPN、代理或开了热点的电脑上，`share` 先给出 Wi-Fi 的地址。** 在 Windows 上，链接可能以代理虚拟网卡的地址开头（sing-box 的 TUN，叫 `falemon-tun`，`172.19.0.1`），网络上的其他人连不上。现在名字像隧道的网卡（`falemon-tun`、OpenVPN 的 TAP、Wintun、名字里带 `vpn` 的），点对点链路，以及这台电脑自己建的网络（移动热点的 `192.168.137.1`、虚拟机或容器的网络），地址都排在本地网络后面。电脑在多个网络上时，`share` 会提示：链接打不开，可以把地址换成列出的另一个再试（@Bistard 报告，[#37](https://github.com/JimLiu/baoyu-design/issues/37)）。
+- **防火墙或代理拦着 `::1` 时，`open` 不再报端口被占用。** 探测被 `EACCES` 或 `EPERM` 拒绝，以前算成端口上有东西应答，`open` 试的 100 个端口全部放弃。
+- 技能文件夹在服务器运行期间被移动、改名或删除，页面现在会说明这一点，并把文件夹告诉主人，而不是让他重装技能；访客看到的是请分享的人重新打开。
+
 ## 2.12.1 - 2026-11-07
 
 ### 修复

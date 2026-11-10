@@ -28,7 +28,7 @@ No website, no separate subscription, no upload step. The agent already on your 
 | Skill | Makes | You edit it in |
 |---|---|---|
 | [`claude-slides`](skills/claude-slides/) | Slide decks: `project/deck.json` plus one HTML file per slide | The slides editor: present, retype, drag; export PDF, HTML or PowerPoint |
-| [`claude-design`](skills/claude-design/) | A canvas of artboards: `project/canvas.json` plus `.dc.html` Design Components | The canvas editor: artboards side by side, play prototypes, retype copy, adjust tweaks; export HTML, PDF or PNG |
+| [`claude-design`](skills/claude-design/) | A canvas of artboards: `project/canvas.json` plus `.dc.html` Design Components | The canvas editor: artboards side by side, play prototypes, retype copy, adjust tweaks; export HTML, PDF, PNG or HTML for Figma |
 | [`claude-design-system`](skills/claude-design-system/) | Design systems: tokens, a README brand book, component previews, fonts, asset groups | The design system editor: browse and edit colors, type, components and assets |
 | [`claude-dashboard`](skills/claude-dashboard/) | Data‑backed dashboards: datasets (CSV, TSV, JSON) and a page of charts, numbers and tables over them | The dashboard page: live charts, filters, and a Sources panel that traces every number to its rows |
 | [`claude-motion`](skills/claude-motion/) | Motion films: animated videos, 10–30 s unless you ask for more and 15 minutes at most, written as code scene by scene into the film's own store under `<root>/db/` | The Motion player: watch it fill in, retype lines, drag scene lengths, adjust style and tweaks; export MP4 or GIF |
@@ -61,7 +61,7 @@ A deck is `project/deck.json` plus one HTML file per slide. In the editor you ca
 
 <img src="assets/screenshots/claude-design-canvas.webp" alt="A coffee subscription landing page and its mobile signup form side by side on the claude-design canvas" width="880">
 
-A canvas holds artboards side by side: `project/canvas.json` plus one `.dc.html` Design Component per artboard. Play an artboard as a working prototype, on the canvas or full screen; retype copy, adjust tweaks and leave notes; export the whole design as a standalone HTML page, a PDF or PNG images (1× or 2×, several artboards in a .zip). *Above: the landing hero of a coffee subscription, with its mobile signup form beside it.*
+A canvas holds artboards side by side: `project/canvas.json` plus one `.dc.html` Design Component per artboard. Play an artboard as a working prototype, on the canvas or full screen; retype copy, adjust tweaks and leave notes; export the whole design as a standalone HTML page, a PDF or PNG images (1× or 2×, several artboards in a .zip); **HTML for Figma** saves the artboards as a page without frames, for Figma's Chrome extension to capture. *Above: the landing hero of a coffee subscription, with its mobile signup form beside it.*
 
 ### `claude-design-system`: design systems
 
