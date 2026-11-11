@@ -4,6 +4,18 @@ English | [中文](./CHANGELOG.zh.md)
 
 All notable changes to `baoyu-design` are tracked in this file.
 
+## 2.13.0 - 2026-11-10
+
+### Features
+- **Whiteboard is released.** `claude-whiteboard` lays out thinking on a board: a diagram, a flow, a map of ideas, a plan, a comparison or a drawn explanation. The agent writes it as elements (sections, blocks joined by arrows, text, tables, sticky notes, drawings and small working embeds) into the board's own store, and you watch them land in the local board editor. There you move and resize things, type, draw with the pen, and add sections, sticky notes, shapes and stickers from the toolbar, and the agent sees what you changed. Comment on an item, a spot or an area and send it to the agent, which changes the board and replies. **Share** opens the board to your local network with a link per role, everyone on a link sees the others' cursors and changes live, and its Export tab downloads the whole folder as a zip. **History** lists the versions. One server serves every board on the computer. Needs Node 22+. The board's own assistant on claude.ai (the Ask box, cursor chat, read-aloud and dictation) is not available locally; ask the agent in your conversation instead.
+- DeepSeek Harness: the new `dsh-claude-whiteboard` plugin. Comments sent from a board reach the agent, and boards are listed on the **Artifacts** page with a picture of the board, where they can be renamed like the other kinds.
+- ChatGPT and Codex: the new **Baoyu Whiteboard** plugin in the baoyu-design marketplace.
+
+## 2.12.3 - 2026-11-10
+
+### Fixes
+- **`claude-design`: `check` now catches a canvas title placed too close above its row.** An artboard's name strip keeps its size on screen while a title (`title1`) scales with the canvas, so a title 140 px above its row looked fine at 100% but covered the artboards' names once zoomed out below about 50%. `SKILL.md` already asked for at least 223 px. `check` now reports a title of 72 px or more that is closer than that to the artboards under it, or that sits over one: one issue per title, with the `y` to move it to. Text the user adds with the editor's text tool is left alone, wherever it is (contributed by @congee949, [#38](https://github.com/JimLiu/baoyu-design/pull/38)).
+
 ## 2.12.2 - 2026-11-09
 
 ### Features

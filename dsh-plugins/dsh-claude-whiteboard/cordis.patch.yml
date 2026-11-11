@@ -1,0 +1,13 @@
+# dsh-claude-whiteboard bundle patch: installing the package (the Plugins page, or
+# `dsh plugin --profile <name> add <spec>`) adds it to the profile's bundles,
+# and this layer mounts two rows. claude-whiteboard registers the skill with the
+# profile's skill registry, for every preset; to give it to one preset, turn this
+# row off and declare dsh-claude-whiteboard among that preset's plugins. claude-artifacts-whiteboard
+# is dsh-claude-artifacts, what the baoyu-design plugins share (the Artifacts page, comments
+# reaching the agent). It stays on whichever that is. Each plugin mounts it under its own id, so
+# that the plugin can be removed while another one is installed; one of the rows does the work.
+- insert:
+    - id: claude-artifacts-whiteboard
+      name: dsh-claude-artifacts
+    - id: claude-whiteboard
+      name: dsh-claude-whiteboard

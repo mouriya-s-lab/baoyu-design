@@ -1,4 +1,4 @@
-// dsh-claude-artifacts 2.12.2: built from baoyu-design.
+// dsh-claude-artifacts 2.13.0: built from baoyu-design.
 window.__ModuleLoader__.load({
 	id: "dsh-claude-artifacts",
 	factory: (require) => {
@@ -90,7 +90,21 @@ window.__ModuleLoader__.load({
 		  // The doc's frame, below the bars, at a width where the text fills it.
 		  "claude-docs": { width: 860, height: 700, find: `document.querySelector('iframe')` },
 		  // The film's first frame.
-		  "claude-motion": { width: 1280, height: 800, find: `document.querySelector('.an-stage iframe')` }
+		  "claude-motion": { width: 1280, height: 800, find: `document.querySelector('.an-stage iframe')` },
+		  // The board, below the zoom readout and above the tools, once something is on it.
+		  "claude-whiteboard": {
+		    width: 1280,
+		    height: 800,
+		    find: `(() => {
+		      const board = document.querySelector('.wb-surface');
+		      const tools = document.querySelector('[data-tb-foot-tips]');
+		      if (!board || !tools || !board.querySelector('[role="listitem"]')) return null;
+		      const r = board.getBoundingClientRect();
+		      const zoom = document.querySelector('[data-testid="mc-zoom"]')?.closest('[role="toolbar"]');
+		      const top = zoom ? zoom.getBoundingClientRect().bottom + 8 : r.top;
+		      return { x: r.left, y: top, width: r.width, height: tools.getBoundingClientRect().top - 8 - top };
+		    })()`
+		  }
 		};
 		var sleep = (ms, signal) => new Promise((resolve, reject) => {
 		  if (signal.aborted) return reject(signal.reason);
@@ -743,6 +757,7 @@ window.__ModuleLoader__.load({
 		  "type.claude-dashboard": "看板",
 		  "type.claude-docs": "文档",
 		  "type.claude-motion": "动画",
+		  "type.claude-whiteboard": "白板",
 		  "create.heading": "新建",
 		  "create.new": "新建",
 		  "create.session": "新会话",
@@ -752,6 +767,7 @@ window.__ModuleLoader__.load({
 		  "prompt.claude-dashboard": "帮我做一个数据看板，数据是：",
 		  "prompt.claude-docs": "帮我写一份文档，内容是：",
 		  "prompt.claude-motion": "帮我做一段动画，内容是：",
+		  "prompt.claude-whiteboard": "帮我在白板上画出：",
 		  "view.list": "列表视图",
 		  "view.grid": "网格视图",
 		  "filter.button": "排序和筛选",
@@ -818,6 +834,7 @@ window.__ModuleLoader__.load({
 		  "about.claude-dashboard": "用你的数据文件做看板：图表、数字和表格，数据变了就跟着更新。",
 		  "about.claude-docs": "写可以编辑、评论和分享的文档。",
 		  "about.claude-motion": "做短动画，导出 MP4 或 GIF。",
+		  "about.claude-whiteboard": "在白板上摆出示意图、流程和想法，可以拖动、画画、留评论。",
 		  "install.title": "安装「{type}」插件？",
 		  "install.body": "点「安装」会装上 {plugin} 插件，装好后点这个入口就能新建。",
 		  "install.manual": "到「插件」页搜索 {plugin} 并安装，装好后点这个入口就能新建。",
@@ -846,6 +863,7 @@ window.__ModuleLoader__.load({
 		  "type.claude-dashboard": "Dashboard",
 		  "type.claude-docs": "Docs",
 		  "type.claude-motion": "Motion",
+		  "type.claude-whiteboard": "Whiteboard",
 		  "create.heading": "Make something new",
 		  "create.new": "New",
 		  "create.session": "New session",
@@ -855,6 +873,7 @@ window.__ModuleLoader__.load({
 		  "prompt.claude-dashboard": "Make me a dashboard from this data: ",
 		  "prompt.claude-docs": "Write me a doc about: ",
 		  "prompt.claude-motion": "Make me an animation about: ",
+		  "prompt.claude-whiteboard": "Lay this out on a whiteboard: ",
 		  "view.list": "List view",
 		  "view.grid": "Grid view",
 		  "filter.button": "Sort and filter",
@@ -921,6 +940,7 @@ window.__ModuleLoader__.load({
 		  "about.claude-dashboard": "Dashboards over your data files: charts, numbers and tables that follow the data.",
 		  "about.claude-docs": "Docs you can edit, comment on and share.",
 		  "about.claude-motion": "Short animated films you can export as MP4 or GIF.",
+		  "about.claude-whiteboard": "Whiteboards of diagrams, flows and ideas you move, draw on and comment on.",
 		  "install.title": "Install the {type} plugin?",
 		  "install.body": "Install adds the {plugin} plugin. Then this tile starts one.",
 		  "install.manual": "Find {plugin} on the Plugins page and install it. Then this tile starts one.",
@@ -937,7 +957,7 @@ window.__ModuleLoader__.load({
 		  "install.start": "Start",
 		  "dialog.close": "Close"
 		};
-		var SKILLS = ["claude-docs", "claude-slides", "claude-design", "claude-dashboard", "claude-design-system", "claude-motion"];
+		var SKILLS = ["claude-docs", "claude-slides", "claude-design", "claude-dashboard", "claude-design-system", "claude-motion", "claude-whiteboard"];
 		var isSkill = (s) => SKILLS.includes(s);
 		var creatable = (on) => SKILLS.filter((s) => on.includes(s));
 		var promptFor = (skill, t) => `/${skill} ${t(`prompt.${skill}`)}`;
@@ -1032,6 +1052,9 @@ window.__ModuleLoader__.load({
 		.bda-boards{display:flex;gap:6px;flex:1;margin-top:2px}
 		.bda-board{flex:1;border-radius:3px;background:color-mix(in srgb,var(--bda-tint) 18%,var(--dsw-alias-bg-base));box-shadow:0 0 0 .5px var(--dsw-alias-border-l2)}
 		.bda-board:nth-child(2){flex:.7;margin-top:10%}
+		.bda-flow{display:block;width:100%;height:auto;margin-top:4px}
+		.bda-flow rect{fill:color-mix(in srgb,var(--bda-tint) 18%,var(--dsw-alias-bg-base));stroke:var(--dsw-alias-border-l2);stroke-width:.5}
+		.bda-flow path{fill:none;stroke:var(--bda-tint);stroke-width:1.2;stroke-linecap:round;stroke-linejoin:round}
 		.bda-swatches{display:flex;gap:4px}
 		.bda-swatch{width:16px;height:16px;border-radius:50%;background:var(--bda-tint)}
 		.bda-swatch:nth-child(2){opacity:.7}.bda-swatch:nth-child(3){opacity:.45}.bda-swatch:nth-child(4){opacity:.25}
@@ -1128,7 +1151,8 @@ window.__ModuleLoader__.load({
 		  "claude-design-system": "#c79a1b",
 		  "claude-dashboard": "#e5484d",
 		  "claude-docs": "#3f8ef0",
-		  "claude-motion": "#1fa971"
+		  "claude-motion": "#1fa971",
+		  "claude-whiteboard": "#d6409f"
 		};
 		var tintOf = (skill) => isSkill(skill) ? TINTS[skill] : "#8a8a8a";
 		var svg = (size) => ({ display: "block", width: size, height: size, flex: "none" });
@@ -1175,6 +1199,12 @@ window.__ModuleLoader__.load({
 		        return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(import_jsx_runtime2.Fragment, { children: [
 		          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("rect", { x: "2.75", y: "4", width: "14.5", height: "12", rx: "2", ...p }),
 		          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("path", { d: "m8.5 7.75 4 2.25-4 2.25v-4.5Z", ...p })
+		        ] });
+		      case "claude-whiteboard":
+		        return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(import_jsx_runtime2.Fragment, { children: [
+		          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("rect", { x: "2.75", y: "3.25", width: "6", height: "4.5", rx: "1", ...p }),
+		          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("rect", { x: "11.25", y: "11.75", width: "6", height: "4.5", rx: "1", ...p }),
+		          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("path", { d: "M8.75 5.5h3.5a1.5 1.5 0 0 1 1.5 1.5v4.75M3 15.25c1.25-1.5 2.25.75 3.5-.75", ...p })
 		        ] });
 		      default:
 		        return /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("rect", { x: "3", y: "3", width: "14", height: "14", rx: "2", ...p });
@@ -1237,6 +1267,16 @@ window.__ModuleLoader__.load({
 		        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { className: "bda-film-title", children: title }),
 		        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("svg", { viewBox: "0 0 20 20", "aria-hidden": "true", style: svg(22), children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("path", { d: "M7 5.5v9l7.5-4.5L7 5.5Z", fill: "currentColor" }) }),
 		        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { className: "bda-film-bar" })
+		      ] });
+		    case "claude-whiteboard":
+		      return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "bda-paper", children: [
+		        name,
+		        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("svg", { className: "bda-flow", viewBox: "0 0 120 36", "aria-hidden": "true", children: [
+		          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("rect", { x: "1", y: "3", width: "30", height: "15", rx: "3" }),
+		          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("rect", { x: "45", y: "3", width: "30", height: "15", rx: "3" }),
+		          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("rect", { x: "89", y: "19", width: "30", height: "15", rx: "3" }),
+		          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("path", { d: "M31 10.5h14M75 10.5h12a3 3 0 0 1 3 3v5.5" })
+		        ] })
 		      ] });
 		    case "claude-design":
 		      return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "bda-paper", children: [

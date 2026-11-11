@@ -1,5 +1,5 @@
-// dsh-claude-artifacts 2.12.2: built from baoyu-design.
-var define_SKILLS_default = [{ name: "claude-slides", plugin: "dsh-claude-slides", comments: true, published: true }, { name: "claude-design", plugin: "dsh-claude-design", comments: true, published: true }, { name: "claude-design-system", plugin: "dsh-claude-design-system", comments: true, published: true }, { name: "claude-dashboard", plugin: "dsh-claude-dashboard", comments: true, published: true }, { name: "claude-docs", plugin: "dsh-claude-docs", comments: true, commentsBy: "mention", requests: true, published: false }, { name: "claude-motion", plugin: "dsh-claude-motion", comments: true, requests: true, published: true }];
+// dsh-claude-artifacts 2.13.0: built from baoyu-design.
+var define_SKILLS_default = [{ name: "claude-slides", plugin: "dsh-claude-slides", comments: true, published: true }, { name: "claude-design", plugin: "dsh-claude-design", comments: true, published: true }, { name: "claude-design-system", plugin: "dsh-claude-design-system", comments: true, published: true }, { name: "claude-dashboard", plugin: "dsh-claude-dashboard", comments: true, published: true }, { name: "claude-docs", plugin: "dsh-claude-docs", comments: true, commentsBy: "mention", requests: true, published: false }, { name: "claude-motion", plugin: "dsh-claude-motion", comments: true, requests: true, published: true }, { name: "claude-whiteboard", plugin: "dsh-claude-whiteboard", comments: true, published: true }];
 
 import { spawn as spawn2 } from "node:child_process";
 import { randomUUID } from "node:crypto";
@@ -46,7 +46,8 @@ var TITLES = {
   "claude-design-system": ["project/design-system.json", "title"],
   "claude-dashboard": ["db/dash/meta.json", "title"],
   "claude-docs": ["doc.json", "name"],
-  "claude-motion": ["db/film/meta.json", "title"]
+  "claude-motion": ["db/film/meta.json", "title"],
+  "claude-whiteboard": ["db/board/meta.json", "title"]
 };
 var OPEN_TIMEOUT_MS = 3e4;
 var TITLE_MAX = 200;
@@ -57,7 +58,8 @@ var FOLDER = {
   "claude-design-system": ["project"],
   "claude-dashboard": ["db", "_blobs", "src"],
   "claude-docs": ["doc.json", "tabs", "_blobs", ".sessions.json"],
-  "claude-motion": ["db", "_blobs", "src"]
+  "claude-motion": ["db", "_blobs", "src"],
+  "claude-whiteboard": ["db", "_blobs"]
 };
 var NOT_CONTENT = /* @__PURE__ */ new Set([...EDITOR_FILES, ".sessions.json", ".git", "node_modules"]);
 var STAMP_MAX_ENTRIES = 2e4;
@@ -248,7 +250,7 @@ async function renameArtifact(node, script, record, title) {
   const { root, skill } = record;
   const at = TITLES[skill];
   if (at === void 0) throw new Error(`no title to change for ${skill}`);
-  if (skill === "claude-dashboard" || skill === "claude-motion") {
+  if (skill === "claude-dashboard" || skill === "claude-motion" || skill === "claude-whiteboard") {
     const path = at[0].replace(/^db\//, "").replace(/\.json$/, "");
     await runScript(node, script, ["write-db", root, "-"], JSON.stringify([{ op: "update", path, data: { [at[1]]: title } }]));
     return;

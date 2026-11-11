@@ -15,7 +15,7 @@ https://github.com/user-attachments/assets/db6c5d93-dc28-4170-8356-4dbe5725a57c
 
 [![License: MIT for own code, see NOTICE](https://img.shields.io/badge/License-MIT%20for%20own%20code%20%C2%B7%20see%20NOTICE-blue.svg)](NOTICE.md) ![Best with Opus 5.5](https://img.shields.io/badge/Best%20with-Opus%205.5-d97757) ![Harness](https://img.shields.io/badge/Cursor%20%C2%B7%20Claude%20Code%20%C2%B7%20Codex-supported-1f6feb)
 
-This repo brings claude.ai's **Artifact types** to local agents: editable slide decks, design canvases, design systems, data dashboards and motion films, each opened in its own editor that runs on your machine. `motion-director` directs those films, from the point of the film to the finished cut. `dataviz` is the chart guide the agent reads before it draws any chart, in these skills or anywhere else. The five editors also ship as [DeepSeek Harness plugins](#deepseek-harness-plugins), installed from npm by name.
+This repo brings claude.ai's **Artifact types** to local agents: editable slide decks, design canvases, design systems, data dashboards, motion films and whiteboards, each opened in its own editor that runs on your machine. `motion-director` directs those films, from the point of the film to the finished cut. `dataviz` is the chart guide the agent reads before it draws any chart, in these skills or anywhere else. The six editors also ship as [DeepSeek Harness plugins](#deepseek-harness-plugins), installed from npm by name.
 
 The original `baoyu-design` skill (self‑contained HTML mockups and prototypes) has been archived to [`archive/baoyu-design/`](archive/baoyu-design/).
 
@@ -33,17 +33,18 @@ No website, no separate subscription, no upload step. The agent already on your 
 | [`claude-dashboard`](skills/claude-dashboard/) | Data‑backed dashboards: datasets (CSV, TSV, JSON) and a page of charts, numbers and tables over them | The dashboard page: live charts, filters, and a Sources panel that traces every number to its rows |
 | [`claude-motion`](skills/claude-motion/) | Motion films: animated videos, 10–30 s unless you ask for more and 15 minutes at most, written as code scene by scene into the film's own store under `<root>/db/` | The Motion player: watch it fill in, retype lines, drag scene lengths, adjust style and tweaks; export MP4 or GIF |
 | [`motion-director`](skills/motion-director/) | A finished film with something to say: it finds the point, writes the narration for the ear, has it voiced, times every scene to the words, and checks the frames as a viewer would. Needs `claude-motion` beside it | The same Motion player, open from the first minute |
+| [`claude-whiteboard`](skills/claude-whiteboard/) | Whiteboards: diagrams, flows, maps of ideas, plans and comparisons, written as elements (blocks, sections, arrows, tables, sticky notes, drawings, working embeds) into the board's own store under `<root>/db/` | The board editor: move, resize, type, draw with the pen, add sections, sticky notes, shapes and stickers |
 | [`dataviz`](skills/dataviz/) | Better charts in any medium (HTML, SVG, d3, matplotlib, plotly…): picking the form, colors that stay readable in light and dark and for color‑blind readers, marks, legends and tooltips, with a palette validator script | Nothing to open: the agent reads it before writing chart code; swap [`palette.md`](skills/dataviz/references/palette.md) for your brand's colors |
 
 ---
 
-## Artifact skills: editable decks, canvases, design systems, dashboards and films
+## Artifact skills: editable decks, canvases, design systems, dashboards, films and whiteboards
 
-These five skills write the Artifact type's own file format into a folder and open it in that type's editor page, served from your machine. The agent writes the files and the editor shows each write at once; your edits in the editor are saved back into the same files, so you and the agent can take turns.
+These six skills write the Artifact type's own file format into a folder and open it in that type's editor page, served from your machine. The agent writes the files and the editor shows each write at once; your edits in the editor are saved back into the same files, so you and the agent can take turns.
 
-In the slides, canvas and design-system editors and on the dashboard page, choose **Comment** (or press **C**) to comment on an element or area; in the Motion player, its **Comment** button comments on a moment of the film. Comments stay in the project's local `comments.json`; the agent reads and replies through `artifact.mjs`. While it listens with `comments <root> --wait`, the editor offers **Send to Agent** to send your comment for it to act on.
+In the slides, canvas and design-system editors and on the dashboard page, choose **Comment** (or press **C**) to comment on an element or area; in the Motion player, its **Comment** button comments on a moment of the film; on a whiteboard, the comments button comments on an item, a spot or an area. Comments stay in the project's local `comments.json`; the agent reads and replies through `artifact.mjs`. While it listens with `comments <root> --wait`, the editor offers **Send to Agent** to send your comment for it to act on.
 
-To work together, `share <root>` (or `open <root> --lan`) opens the deck, canvas, design system, dashboard or film to your local network, the same Wi‑Fi or LAN, and prints a link per role: **editor** edits and comments, **commenter** comments without editing, **viewer** only looks. Whoever opens a link types a name and is in; what they change shows on everyone's page, and their comments land in the same `comments.json`. The person at this computer is the owner: the **Share** button lists who joined and who is online, changes someone's role or removes them, and turns each link off, back on or resets it. Guests get a Share button too, with the links they may pass on: their own role's and those below it. There is no account and nothing leaves your network; it is plain http, so anyone there with a link gets in.
+To work together, `share <root>` (or `open <root> --lan`) opens the deck, canvas, design system, dashboard, film or board to your local network, the same Wi‑Fi or LAN, and prints a link per role: **editor** edits and comments, **commenter** comments without editing, **viewer** only looks. Whoever opens a link types a name and is in; what they change shows on everyone's page, and their comments land in the same `comments.json`. The person at this computer is the owner: the **Share** button lists who joined and who is online, changes someone's role or removes them, and turns each link off, back on or resets it. Guests get a Share button too, with the links they may pass on: their own role's and those below it. There is no account and nothing leaves your network; it is plain http, so anyone there with a link gets in.
 
 Every change is kept as a version, with who made it: a guest by the name they typed, the owner, or **Agent** for a change made to the files on this computer. The **History** button (the clock beside Share) lists the versions by day; open one to see which slides, artboards or documents it changed, line by line, preview the whole thing as it was, or restore it (or just one part) as a new version, so nothing is lost. When two people save the same slide at once, the later save no longer wipes out the earlier one unnoticed: the version records whose change it replaced, and both people get a notice with **Compare** and **Bring back**, which puts back only what was replaced and leaves the other person's other changes. In the slides, design and design-system editors, someone else's save updates your page in place instead of reloading it, and if they saved the slide, artboard or file you have unsaved edits on, a bar asks whether to use theirs, keep yours, or keep both (yours becomes a new slide after it, an artboard beside it, or a copy of the file). The two are first merged: on a canvas element by element, in slides and design-system files line by line (a token file token by token). When you changed different elements or lines, both changes stay and nothing asks; the bar comes up only when the merge cannot sort it out, such as both changing the same line. The history lives in the project's `history/` folder.
 
@@ -81,9 +82,15 @@ A dashboard is datasets (CSV, TSV or JSON) and a page of charts, numbers and tab
 
 A film is a folder of documents the agent writes with the skill's script, scene by scene, while you watch it fill in the player. Everything on screen is code, a pure function of time, so a change is a rewrite of that moment, not a re-render you wait for. Retype a line, drag a scene's length, change the style in **Tweaks**, or comment on a moment and send it to the agent. A narrated film carries a voice track: one take a scene, from a speech provider of yours or recorded by you, with the motion timed to the words and captions that follow them; a recorded track can play as the music bed. Export MP4 or GIF from the player, or `export` from the command line (Chrome needed; `record`, for filming a page of your own product, also needs ffmpeg). For a film with a point to make, ask for `motion-director`, which directs and uses `claude-motion` as its crew. *Above: the film that introduces Motion, made with Motion.*
 
+### `claude-whiteboard`: whiteboards
+
+<img src="assets/screenshots/claude-whiteboard.webp" alt="A board explaining how a change ships, with Build and Release sections of blocks joined by arrows and a table of check times, open in the claude-whiteboard editor" width="880">
+
+A board is a space for laying out thinking in the form it needs: a diagram, a flow, a map of ideas, a plan, a comparison, a drawn explanation or a small working embed. The agent writes it as elements (blocks, sections, text, arrows, tables, sticky notes, drawings and embeds) into the board's own store with the skill's script, and the editor shows each one as it lands. Move and resize things, type, draw with the pen, and add sections, sticky notes, shapes and stickers from the toolbar; what you change goes into the same store. Comment on an item, a spot or an area and send it to the agent, which changes the board and replies. Everyone on a share link sees the others' cursors and changes live. One server serves every board on this computer. *Above: a board that explains how a change ships.*
+
 ### Run the editors
 
-Each `SKILL.md` keeps the type's original instructions nearly word for word; only the Artifact tool calls are swapped for local ones. That tool lives inside each skill as `scripts/artifact.mjs` (Node 20+, the dashboard's and Motion's Node 22+; nothing to install). The agent runs it for you; by hand:
+Each `SKILL.md` keeps the type's original instructions nearly word for word; only the Artifact tool calls are swapped for local ones. That tool lives inside each skill as `scripts/artifact.mjs` (Node 20+, the dashboard's, Motion's and the whiteboard's Node 22+; nothing to install). The agent runs it for you; by hand:
 
 ```bash
 node skills/claude-slides/scripts/artifact.mjs open designs/q3-review             # start the editor, print its URL
@@ -93,13 +100,13 @@ node skills/claude-slides/scripts/artifact.mjs list                             
 node skills/claude-slides/scripts/artifact.mjs share designs/q3-review           # open it to the local network, print a link per role
 ```
 
-A dashboard or a film is written through the same script (`write-db`, `read-db`, `upload`, `check`, `open`) into its own store under `<root>/db/`. Each skill runs its own local server, and everything in `scripts/` ships prebuilt: plain JavaScript that runs on Node alone, with nothing to install or build.
+A dashboard, a film or a board is written through the same script (`write-db`, `read-db`, `upload`, `check`, `open`) into its own store under `<root>/db/`. Each skill runs its own local server, and everything in `scripts/` ships prebuilt: plain JavaScript that runs on Node alone, with nothing to install or build.
 
 ---
 
 ## DeepSeek Harness plugins
 
-The five editor skills also come as [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) plugins, published on npm. Each plugin carries its skill exactly as this repo publishes it, prebuilt editor included, so Claude Design and the other editors run on your DeepSeek agent.
+The six editor skills also come as [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) plugins, published on npm. Each plugin carries its skill exactly as this repo publishes it, prebuilt editor included, so Claude Design and the other editors run on your DeepSeek agent.
 
 | npm package | Adds | Version |
 |---|---|---|
@@ -108,10 +115,11 @@ The five editor skills also come as [DeepSeek Harness](https://github.com/deepse
 | [`dsh-claude-design-system`](https://www.npmjs.com/package/dsh-claude-design-system) | `/claude-design-system`: design systems | [![npm](https://img.shields.io/npm/v/dsh-claude-design-system)](https://www.npmjs.com/package/dsh-claude-design-system) |
 | [`dsh-claude-dashboard`](https://www.npmjs.com/package/dsh-claude-dashboard) | `/claude-dashboard`: data‑backed dashboards | [![npm](https://img.shields.io/npm/v/dsh-claude-dashboard)](https://www.npmjs.com/package/dsh-claude-dashboard) |
 | [`dsh-claude-motion`](https://www.npmjs.com/package/dsh-claude-motion) | `/claude-motion`: motion films | [![npm](https://img.shields.io/npm/v/dsh-claude-motion)](https://www.npmjs.com/package/dsh-claude-motion) |
+| [`dsh-claude-whiteboard`](https://www.npmjs.com/package/dsh-claude-whiteboard) | `/claude-whiteboard`: whiteboards | [![npm](https://img.shields.io/npm/v/dsh-claude-whiteboard)](https://www.npmjs.com/package/dsh-claude-whiteboard) |
 
-In the slides, canvas and design-system editors, on the dashboard page and in the Motion player, a comment goes straight to the agent: whenever the agent opens an editor, the plugin waits for comments. Mark up the page, tick **Send to Agent**, and the agent wakes up, reads your comment, makes the change and replies in the comment thread. The comment also shows in the chat as a card.
+In the slides, canvas and design-system editors, on the dashboard page, in the Motion player and on a whiteboard, a comment goes straight to the agent: whenever the agent opens an editor, the plugin waits for comments. Mark up the page, tick **Send to Agent**, and the agent wakes up, reads your comment, makes the change and replies in the comment thread. The comment also shows in the chat as a card.
 
-The plugins also add **Artifacts** to the app's left sidebar: every deck, canvas, design system, dashboard and film the agent has opened, each with a thumbnail, as a grid or a list, with search, sort and filters. Click one and the app goes back to the conversation that made it and opens the editor in the right sidebar. A tile at the top starts a new session with the input filled in for that kind of thing, so the right skill loads.
+The plugins also add **Artifacts** to the app's left sidebar: every deck, canvas, design system, dashboard, film and board the agent has opened, each with a thumbnail, as a grid or a list, with search, sort and filters. Click one and the app goes back to the conversation that made it and opens the editor in the right sidebar. A tile at the top starts a new session with the input filled in for that kind of thing, so the right skill loads.
 
 ### Install from npm
 
@@ -119,7 +127,7 @@ All you need is the DeepSeek Harness desktop app: no repo to clone, nothing to b
 
 1. In the app, open **Plugins** → **Add plugin**.
 2. Enter a package name from the table, such as `dsh-claude-design`, in **Package name or address**, and click **Install**. If the plugin's switch is off, turn it on. Repeat for each plugin you want.
-3. Quit and reopen the app, then start a new session and ask for a deck, a canvas, a design system, a dashboard or a film, or type `/claude-design` (`/claude-slides` and so on).
+3. Quit and reopen the app, then start a new session and ask for a deck, a canvas, a design system, a dashboard, a film or a whiteboard, or type `/claude-design` (`/claude-slides` and so on).
 
 To install into a CLI profile, such as `web`:
 
@@ -143,7 +151,7 @@ A workspace that has its own copy of a skill (in `.agents/skills/` or `.dsh/skil
 
 ## ChatGPT plugins
 
-The same skills also come as plugins for the ChatGPT desktop app and Codex: [Baoyu Slides](chatgpt-plugins/baoyu-slides/), [Baoyu Canvas](chatgpt-plugins/baoyu-canvas/), [Baoyu Design System](chatgpt-plugins/baoyu-design-system/), [Baoyu Dashboard](chatgpt-plugins/baoyu-dashboard/), [Baoyu Motion](chatgpt-plugins/baoyu-motion/) (with `motion-director` and `dataviz`) and [Baoyu Dataviz](chatgpt-plugins/baoyu-dataviz/). Add this repository as a marketplace, then install the ones you want:
+The same skills also come as plugins for the ChatGPT desktop app and Codex: [Baoyu Slides](chatgpt-plugins/baoyu-slides/), [Baoyu Canvas](chatgpt-plugins/baoyu-canvas/), [Baoyu Design System](chatgpt-plugins/baoyu-design-system/), [Baoyu Dashboard](chatgpt-plugins/baoyu-dashboard/), [Baoyu Motion](chatgpt-plugins/baoyu-motion/) (with `motion-director` and `dataviz`), [Baoyu Whiteboard](chatgpt-plugins/baoyu-whiteboard/) and [Baoyu Dataviz](chatgpt-plugins/baoyu-dataviz/). Add this repository as a marketplace, then install the ones you want:
 
 ```bash
 codex plugin marketplace add JimLiu/baoyu-design --sparse .agents/plugins --sparse chatgpt-plugins
@@ -175,7 +183,7 @@ Using the DeepSeek Harness app? You don't need this section: [install the plugin
 
 - A local agent — **[Cursor](https://cursor.com)**, **[Claude Code](https://claude.com/claude-code)**, **[Codex](https://developers.openai.com/codex/)**, or any of the 70+ agents the installer supports (Cline, Roo Code, GitHub Copilot…). Cursor, Claude Code, and Codex have first‑class tool references inside the skill.
 - **Claude Opus 5.5** selected as the model, for best results.
-- **Node.js**, for the `npx` installer below and for the artifact skills' editors (Node 20+, the dashboard and Motion Node 22+).
+- **Node.js**, for the `npx` installer below and for the artifact skills' editors (Node 20+, the dashboard, Motion and the whiteboard Node 22+).
 
 ### Install
 
@@ -227,7 +235,7 @@ The agent clones or fetches the repo, loads `SKILL.md`, and proceeds — perfect
 
 ### Use it
 
-Once a skill is installed (or fetched), ask for what you want (*"Make a 12‑slide deck from this PRD"*, *"Turn this CSV into a dashboard"*) or call one by name: `/claude-slides`, `/claude-design`, `/claude-design-system`, `/claude-dashboard`, `/claude-motion` or `/motion-director` in Claude Code, `$claude-slides` and so on in Codex. The agent writes the files under `designs/<slug>/`, starts the editor, and gives you its `http://127.0.0.1` URL.
+Once a skill is installed (or fetched), ask for what you want (*"Make a 12‑slide deck from this PRD"*, *"Turn this CSV into a dashboard"*) or call one by name: `/claude-slides`, `/claude-design`, `/claude-design-system`, `/claude-dashboard`, `/claude-motion`, `/motion-director` or `/claude-whiteboard` in Claude Code, `$claude-slides` and so on in Codex. The agent writes the files under `designs/<slug>/`, starts the editor, and gives you its `http://127.0.0.1` URL.
 
 ---
 
@@ -238,6 +246,7 @@ Once a skill is installed (or fetched), ask for what you want (*"Make a 12‑sli
 - *"Turn the Chakra UI component library into a design system with live component previews."*
 - *"Turn this analytics CSV into a dashboard that compares the last 28 days with the 28 before."*
 - *"Use motion-director to turn this launch post into a 60‑second narrated film."*
+- *"Map out our onboarding flow on a claude-whiteboard board, with the open questions as sticky notes."*
 
 For best results, **give it design context** — a screenshot, a UI kit, a design system, or a codebase. Starting from real context is the single biggest lever on quality; the skill will ask for it if you don't provide it.
 

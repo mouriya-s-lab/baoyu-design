@@ -2,7 +2,7 @@
 
 [English](README.md) · [简体中文](README.zh-CN.md) · [返回 baoyu-design](../README.zh-CN.md)
 
-这里的每个文件夹都是一个插件，ChatGPT 桌面版和 Codex 都能用，装的是同一个包。你让 Agent 做幻灯片、设计稿、设计系统、仪表盘或影片，它会把文件写进你的工作区，再给你一个编辑器链接，编辑器就跑在你自己的电脑上。
+这里的每个文件夹都是一个插件，ChatGPT 桌面版和 Codex 都能用，装的是同一个包。你让 Agent 做幻灯片、设计稿、设计系统、仪表盘、影片或白板，它会把文件写进你的工作区，再给你一个编辑器链接，编辑器就跑在你自己的电脑上。
 
 | 插件 | 技能 | 能做什么 |
 |---|---|---|
@@ -11,9 +11,10 @@
 | [Baoyu Design System](baoyu-design-system/)<br>`baoyu-design-system` | `claude-design-system` | 设计系统：令牌、字体、组件、素材和品牌手册 |
 | [Baoyu Dashboard](baoyu-dashboard/)<br>`baoyu-dashboard` | `claude-dashboard` | 数据仪表盘：每个数字都能追到来源 |
 | [Baoyu Motion](baoyu-motion/)<br>`baoyu-motion` | `claude-motion`<br>`motion-director`<br>`dataviz` | 动画影片：逐场景写成代码，本地播放，导出 MP4、GIF；带导演技能 |
+| [Baoyu Whiteboard](baoyu-whiteboard/)<br>`baoyu-whiteboard` | `claude-whiteboard` | 白板：示意图、流程、想法地图，拖动、画画、留评论 |
 | [Baoyu Dataviz](baoyu-dataviz/)<br>`baoyu-dataviz` | `dataviz` | 图表方法：选图形、配色公式和校验脚本、图形规范，不需要本地服务 |
 
-按需安装，每个插件都能单独用。会打开编辑器的插件要在你的电脑上运行，所以只能用在桌面版和本地运行的对话里，电脑上还要有 [Node.js](https://nodejs.org)：20 或更高，Dashboard 和 Motion 要 22 或更高。这些插件没有上架 OpenAI 的插件目录，要从本仓库添加。
+按需安装，每个插件都能单独用。会打开编辑器的插件要在你的电脑上运行，所以只能用在桌面版和本地运行的对话里，电脑上还要有 [Node.js](https://nodejs.org)：20 或更高，Dashboard、Motion 和 Whiteboard 要 22 或更高。这些插件没有上架 OpenAI 的插件目录，要从本仓库添加。
 
 ## 安装
 

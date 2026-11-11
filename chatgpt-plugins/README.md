@@ -2,7 +2,7 @@
 
 [English](README.md) · [简体中文](README.zh-CN.md) · [Back to baoyu-design](../README.md)
 
-Each folder here is a plugin for the ChatGPT desktop app and Codex, which load the same packages. Ask the agent for a slide deck, a design, a design system, a dashboard or a film, and it writes the files into your workspace, then gives you a link to an editor that runs on your computer.
+Each folder here is a plugin for the ChatGPT desktop app and Codex, which load the same packages. Ask the agent for a slide deck, a design, a design system, a dashboard, a film or a whiteboard, and it writes the files into your workspace, then gives you a link to an editor that runs on your computer.
 
 | Plugin | Skills | What it does |
 |---|---|---|
@@ -11,9 +11,10 @@ Each folder here is a plugin for the ChatGPT desktop app and Codex, which load t
 | [Baoyu Design System](baoyu-design-system/)<br>`baoyu-design-system` | `claude-design-system` | Design systems: tokens, type, components, assets and a brand book |
 | [Baoyu Dashboard](baoyu-dashboard/)<br>`baoyu-dashboard` | `claude-dashboard` | Data-backed dashboards whose Sources panel shows where every number comes from |
 | [Baoyu Motion](baoyu-motion/)<br>`baoyu-motion` | `claude-motion`<br>`motion-director`<br>`dataviz` | Animated films written scene by scene, exported to MP4 or GIF, with a director skill |
+| [Baoyu Whiteboard](baoyu-whiteboard/)<br>`baoyu-whiteboard` | `claude-whiteboard` | Whiteboards of diagrams, flows and ideas: move, draw, comment |
 | [Baoyu Dataviz](baoyu-dataviz/)<br>`baoyu-dataviz` | `dataviz` | A method for any chart: choosing a form, a color formula with a validator, mark specs |
 
-Install only the ones you need; each works on its own. The plugins that open an editor run on your computer, so they are for the desktop app and for threads that run locally, and they need [Node.js](https://nodejs.org) on your computer: 20 or later, 22 or later for Dashboard and Motion. They are not in OpenAI's plugin directory; you add them from this repository.
+Install only the ones you need; each works on its own. The plugins that open an editor run on your computer, so they are for the desktop app and for threads that run locally, and they need [Node.js](https://nodejs.org) on your computer: 20 or later, 22 or later for Dashboard, Motion and Whiteboard. They are not in OpenAI's plugin directory; you add them from this repository.
 
 ## Install
 

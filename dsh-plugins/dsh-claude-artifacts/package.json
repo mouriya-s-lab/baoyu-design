@@ -1,6 +1,6 @@
 {
   "name": "dsh-claude-artifacts",
-  "version": "2.12.2",
+  "version": "2.13.0",
   "description": "DeepSeek Harness plugin: What the baoyu-design plugins share: the Artifacts page in the sidebar, and comments from their editors reaching the agent.",
   "keywords": [
     "dsh",
@@ -21,6 +21,18 @@
   "icon": "./icon.svg",
   "baoyuDesign": {
     "releaseNotes": [
+      {
+        "version": "2.13.0",
+        "date": "2026-11-10",
+        "en": "### Features\n- **Whiteboard is released.** `claude-whiteboard` lays out thinking on a board: a diagram, a flow, a map of ideas, a plan, a comparison or a drawn explanation. The agent writes it as elements (sections, blocks joined by arrows, text, tables, sticky notes, drawings and small working embeds) into the board's own store, and you watch them land in the local board editor. There you move and resize things, type, draw with the pen, and add sections, sticky notes, shapes and stickers from the toolbar, and the agent sees what you changed. Comment on an item, a spot or an area and send it to the agent, which changes the board and replies. **Share** opens the board to your local network with a link per role, everyone on a link sees the others' cursors and changes live, and its Export tab downloads the whole folder as a zip. **History** lists the versions. One server serves every board on the computer. Needs Node 22+. The board's own assistant on claude.ai (the Ask box, cursor chat, read-aloud and dictation) is not available locally; ask the agent in your conversation instead.\n- DeepSeek Harness: the new `dsh-claude-whiteboard` plugin. Comments sent from a board reach the agent, and boards are listed on the **Artifacts** page with a picture of the board, where they can be renamed like the other kinds.\n- ChatGPT and Codex: the new **Baoyu Whiteboard** plugin in the baoyu-design marketplace.",
+        "zh": "### 新功能\n- **白板正式发布。** `claude-whiteboard` 把想法摆在白板上：示意图、流程、想法地图、计划、对比或手绘的讲解。Agent 把它写成一个个元素（分区、用箭头连起来的方块、文字、表格、便签、手绘图和能操作的小嵌入），存进白板自己的存储，你在本地白板编辑器里看着它们一个个出现。你可以拖动、缩放、打字、用画笔画，从工具栏加分区、便签、形状和贴纸，你改了什么 Agent 也看得到。对一个元素、一个位置或一块区域留评论发给 Agent，它改好白板再回复你。**Share** 把白板开放到局域网，每种角色一个链接，拿到链接的人能实时看到彼此的光标和改动，它的 Export 页可以把整个文件夹下载成 zip。**History** 列出各个版本。这台电脑上的所有白板共用一个服务器。需要 Node 22+。claude.ai 上白板自带的助手（Ask 输入框、光标聊天、朗读和听写）在本地用不了，在对话里问 Agent 就好。\n- DeepSeek Harness：新增 `dsh-claude-whiteboard` 插件。白板上发出的评论会交给 Agent，白板也列在 **Artifacts** 页面上，带白板的缩略图，可以像其他类型一样改名。\n- ChatGPT 和 Codex：baoyu-design 插件市场新增 **Baoyu Whiteboard** 插件。"
+      },
+      {
+        "version": "2.12.3",
+        "date": "2026-11-10",
+        "en": "### Fixes\n- **`claude-design`: `check` now catches a canvas title placed too close above its row.** An artboard's name strip keeps its size on screen while a title (`title1`) scales with the canvas, so a title 140 px above its row looked fine at 100% but covered the artboards' names once zoomed out below about 50%. `SKILL.md` already asked for at least 223 px. `check` now reports a title of 72 px or more that is closer than that to the artboards under it, or that sits over one: one issue per title, with the `y` to move it to. Text the user adds with the editor's text tool is left alone, wherever it is (contributed by @congee949, [#38](https://github.com/JimLiu/baoyu-design/pull/38)).",
+        "zh": "### 修复\n- **`claude-design`：`check` 现在会查出离画板太近的画布标题。** 画板的名称条在屏幕上大小不变，标题（`title1`）却跟着画布缩放，所以标题放在一行画板上方 140 px，100% 时看着没问题，缩到 50% 以下就压住了画板的名字。`SKILL.md` 本来就要求至少 223 px；现在 72 px 及以上的标题离下面的画板不到这个距离，或者压在画板上，`check` 都会报出来，每个标题一条，并给出要挪到的 `y`。用户用编辑器文字工具加的文字，放在哪里都不查（@congee949 贡献，[#38](https://github.com/JimLiu/baoyu-design/pull/38)）。"
+      },
       {
         "version": "2.12.2",
         "date": "2026-11-09",
@@ -56,18 +68,6 @@
         "date": "2026-11-05",
         "en": "### Fixes\n- DeepSeek Harness 0.2.2 has its own plugin updates, so a plugin's page showed two update buttons and two tags, the app's and the plugin's. It now shows one: the app's for a plugin the card hasn't updated, the plugin's own for one it has.\n- The one-click update looks again at what there is to update before it starts, so a plugin the app's button just updated isn't tried again. When the reply to an update is lost, the card no longer says the plugin stayed on its version: it asks you to check on the Plugins page.\n- The [how-to](dsh-plugins/README.md#if-something-doesnt-work) says what to do when the app's own **Update to x** fails on the second of two plugins and switches it off, and that 2.9.2 and earlier can use that button on DeepSeek Harness 0.2.2 instead of updating by hand.",
         "zh": "### 修复\n- DeepSeek Harness 0.2.2 自带了插件更新，插件详情页因此出现两个更新按钮和两个标签，应用的和插件的各一套。现在只有一个：没用卡片更新过的插件显示应用的按钮，更新过的显示插件自己的。\n- 一键更新开始前会重新确认要更新什么，刚用应用自带按钮更新过的插件不会再更新一次。更新的回复丢失时，卡片不再说插件还是原来的版本，而是请你到插件页确认。\n- [使用说明](dsh-plugins/README.zh-CN.md#遇到问题)写明了应用自带的 **更新到 x** 更新第二个插件失败、插件被关掉时怎么办；也说明了在 DeepSeek Harness 0.2.2 上，2.9.2 和更早的版本可以直接用这个按钮更新，不用手动。"
-      },
-      {
-        "version": "2.10.0",
-        "date": "2026-11-05",
-        "en": "### Features\n- **The DeepSeek Harness plugins update in one click.** When a new version is out, the app offers it: a card at the bottom right, a line at the top of the **Artifacts** page, and an **Update** button on each plugin's page. One click updates the plugins together, with nothing to uninstall, and most updates need no restart. If an update fails, the plugin stays on the version it was. A plugin added from a folder isn't offered one. This starts with 2.10.0, so 2.9.2 and earlier need [one last update by hand](dsh-plugins/README.md#update).\n- **DeepSeek Harness: a skill can be kept to one agent preset.** Turn off the plugin's own row and declare the plugin in the preset, and `/` lists the skill only in that preset's sessions. The **Artifacts** page and comments keep working, through a new package, `dsh-claude-artifacts`, that each plugin installs with it. See [how to set it up](dsh-plugins/README.md#keep-a-skill-to-one-preset).\n\n### Fixes\n- `archive` and the **Whole folder** export zipped `.git`, including the remote's address and any token in it, and that zip is what gets sent to other people. `.git` now stays out, at any depth.\n- An artifact folder's default `.gitignore` took `exports/` (a film's MP4 too) and two of the three temp file shapes into git, and its `history/` rule also matched a project's own folder of that name, which git then dropped. `history/` and `exports/` now match only at the top of the folder.\n- `share` could give out a TUN proxy's address, such as sing-box's `172.19.0.1`, first when the system lists it first. It now skips an address that answers at every port, and lists tunnels after the local network.\n- Design's Standalone export: a `#id` link did nothing when the file was opened directly, and over `http://` it also scrolled the page around the frame. A click now scrolls inside the frame only, as Play does.",
-        "zh": "### 新功能\n- **DeepSeek Harness 插件可以一键更新。** 出了新版本，应用会提示你：右下角弹出卡片，**Artifacts** 页（中文界面是「作品」）顶部和每个插件的详情页也有 **Update**（更新）按钮。点一下，这些插件一起更新，不用卸载，多数情况也不用重启。更新失败时插件还是原来的版本。从文件夹安装的插件不会收到提示。这个功能从 2.10.0 开始，所以 2.9.2 和更早的版本要[最后手动更新一次](dsh-plugins/README.zh-CN.md#更新)。\n- **DeepSeek Harness：技能可以只留给某个 Agent 预设。** 关掉插件自己那一行，再在预设里声明这个插件，`/` 就只在这个预设的会话里列出这个技能。作品页和评论照常工作，它们现在由新包 `dsh-claude-artifacts` 负责，每个插件都会带上它。[设置方法](dsh-plugins/README.zh-CN.md#只让某个预设用某个技能)。\n\n### 修复\n- `archive` 和导出的 **Whole folder**（整个文件夹）会把 `.git` 打进 zip，里面有远程仓库地址和可能带着的 token，而这个 zip 正是要发给别人的。现在任何层级的 `.git` 都不会打进去。\n- 作品文件夹默认的 `.gitignore` 会把 `exports/`（包括影片的 MP4）和三种临时文件里的两种提交进 git；它的 `history/` 规则还会匹配项目自己的同名文件夹，导致 git 把那个文件夹漏掉。现在 `history/` 和 `exports/` 只匹配文件夹顶层。\n- 系统把 TUN 代理的网卡排在前面时，`share` 可能先给出代理的地址，比如 sing-box 的 `172.19.0.1`。现在会跳过在所有端口都有应答的地址，并把隧道网卡排在局域网后面。\n- 设计稿的 Standalone 导出：直接打开文件时，`#id` 链接点了没反应；通过 `http://` 打开时，还会连带滚动框架外的页面。现在点击只在框架内滚动，和 Play 一样。"
-      },
-      {
-        "version": "2.9.2",
-        "date": "2026-11-04",
-        "en": "### Fixes\n- DeepSeek Harness on Windows: the command the skills told the agent to run was written for a POSIX shell, and PowerShell reads a quoted path at the start of a line as a string, not a command. On Windows they now give `& '<node>' '<script>' <command>`, and say that PowerShell has no heredoc.",
-        "zh": "### 修复\n- Windows 上的 DeepSeek Harness：技能告诉 agent 运行的命令是按 POSIX shell 写的，而 PowerShell 会把行首带引号的路径当成字符串，不当成命令。现在 Windows 上给的是 `& '<node>' '<script>' <command>`，并说明 PowerShell 没有 heredoc。"
       }
     ]
   },

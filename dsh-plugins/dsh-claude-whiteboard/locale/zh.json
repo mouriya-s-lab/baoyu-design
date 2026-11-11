@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Claude 白板",
+    "description": "加入 claude-whiteboard 技能：Agent 把示意图、流程、想法地图、计划和对比摆在一块白板上，在本地白板编辑器里打开。你可以拖动、画画、打字、留评论，再把评论发给 Agent。",
+    "detail": "docs/DETAIL.zh.md"
+  }
+}

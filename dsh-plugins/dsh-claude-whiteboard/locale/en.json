@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Claude Whiteboard",
+    "description": "Adds the claude-whiteboard skill: the agent lays out diagrams, flows, maps of ideas, plans and comparisons on a whiteboard and opens it in a local board editor, where you move things, draw, type, comment and send comments to the agent.",
+    "detail": "docs/DETAIL.md"
+  }
+}

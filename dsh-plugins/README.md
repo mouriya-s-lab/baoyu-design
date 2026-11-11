@@ -3,7 +3,7 @@
 [English](README.md) · [简体中文](README.zh-CN.md) · [Back to baoyu-design](../README.md)
 
 Each folder here is a plugin for the [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) app. A plugin
-adds one baoyu-design skill: ask the agent for a slide deck, a design, a design system, a dashboard or a film, and it writes the
+adds one baoyu-design skill: ask the agent for a slide deck, a design, a design system, a dashboard, a film or a whiteboard, and it writes the
 files into your workspace, then gives you a link to an editor that runs on your computer. The link opens in the app's
 sidebar, next to the chat.
 
@@ -14,6 +14,7 @@ sidebar, next to the chat.
 | [Claude Design System](dsh-claude-design-system/)<br>`/claude-design-system` | [`dsh-claude-design-system`](https://www.npmjs.com/package/dsh-claude-design-system) | The agent writes design systems (tokens, type, components, assets, a brand book) as files and opens them in a local page where you can browse and edit them, and send comments to the agent. | Send to Agent |
 | [Claude Dashboard](dsh-claude-dashboard/)<br>`/claude-dashboard` | [`dsh-claude-dashboard`](https://www.npmjs.com/package/dsh-claude-dashboard) | The agent builds data-backed dashboards (charts, numbers and tables over your data files) and opens them in a local dashboard editor whose Sources panel shows where every number comes from, and where you can send comments to the agent. | Send to Agent |
 | [Claude Motion](dsh-claude-motion/)<br>`/claude-motion` | [`dsh-claude-motion`](https://www.npmjs.com/package/dsh-claude-motion) | The agent writes short animated films (explainers, product demos, title sequences) as code, scene by scene, and plays them in a local Motion player where you watch them fill in, comment on a moment, and export MP4 or GIF. | Send to Agent |
+| [Claude Whiteboard](dsh-claude-whiteboard/)<br>`/claude-whiteboard` | [`dsh-claude-whiteboard`](https://www.npmjs.com/package/dsh-claude-whiteboard) | The agent lays out diagrams, flows, maps of ideas, plans and comparisons on a whiteboard and opens it in a local board editor, where you move things, draw, type, comment and send comments to the agent. | Send to Agent |
 
 Each of them brings along [`dsh-claude-artifacts`](dsh-claude-artifacts/), the part they share: the **Artifacts** page, and
 comments reaching the agent. It installs by itself, and there is one of it however many plugins you add.
@@ -81,8 +82,8 @@ it. The app installs no dependencies for a folder, so add the `dsh-claude-artifa
      comments, and it starts waiting each time it gives you a link.
    - **None**: this editor has no comments. Tell the agent in the chat what to change and where.
 
-To come back later, click **Artifacts** in the left sidebar. It lists every deck, design, design system, dashboard and film
-the agent has opened with these plugins. Click one: the
+To come back later, click **Artifacts** in the left sidebar. It lists every deck, design, design system, dashboard, film and
+whiteboard the agent has opened with these plugins. Click one: the
 app goes back to the conversation that made it and opens the editor in the right sidebar's browser. If that
 conversation was deleted or archived, the editor opens in a new window instead. You can also open a session in the same
 workspace and ask the agent to open it again; it starts the editor and gives you a new link.
@@ -173,7 +174,7 @@ the app's button fails on the second. See [If something doesn't work](#if-someth
 **Updating by hand.** Versions 2.9.2 and earlier don't offer new versions. From DeepSeek Harness 0.2.2, open the plugin's page and click
 **Update to x**. On older apps they need one update by hand:
 
-1. On the Plugins page, open the plugin and click **Uninstall**. The decks, designs, dashboards and films you made stay in their
+1. On the Plugins page, open the plugin and click **Uninstall**. The decks, designs, dashboards, films and boards you made stay in their
    workspace folders.
 2. Install it again: click **Install** on its card in **Discover**, or add it by name, as in [Install](#install).
 3. Quit and reopen the app, and start a new session.
@@ -187,7 +188,7 @@ the repository or by unzipping the new ZIP over the old one, then quit and reope
 
 ## Uninstall
 
-On the Plugins page, open the plugin and click **Uninstall**. The decks, designs, dashboards and films you made stay in their
+On the Plugins page, open the plugin and click **Uninstall**. The decks, designs, dashboards, films and boards you made stay in their
 workspace folders.
 
 ## If something doesn't work
