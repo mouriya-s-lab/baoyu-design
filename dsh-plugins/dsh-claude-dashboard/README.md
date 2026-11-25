@@ -1,44 +1,21 @@
 # dsh-claude-dashboard
 
-A [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) plugin that adds the **claude-dashboard** skill
-from [baoyu-design](https://github.com/JimLiu/baoyu-design): the agent builds data-backed dashboards (charts, numbers
-and tables over your CSV, TSV or JSON files, or data it gathers) as files in your workspace and opens them in a local
-dashboard editor, with a Sources panel that shows where every number comes from.
+**Renamed [`dsh-claude-data`](https://www.npmjs.com/package/dsh-claude-data)** in
+[baoyu-design](https://github.com/JimLiu/baoyu-design) 2.14.0, when the Dashboard type became Data. Install that one.
 
-## Install
-
-In the DeepSeek Harness desktop app: **Plugins** → **Add plugin** → enter `dsh-claude-dashboard` in **Package name or
-address** → **Install**, and turn the plugin on. From the command line, for a CLI profile such as `web`:
-
-```sh
-dsh plugin --profile web add dsh-claude-dashboard
-```
-
-Then start a new session and ask for a dashboard, or type `/claude-dashboard`. A workspace that has its own
-`claude-dashboard` skill (in `.agents/skills/` or `.dsh/skills/`) uses that copy instead of this plugin's.
-
-To update, uninstall the plugin, install it again, and quit and reopen the app. For a day after a release the app's
-package manager (pnpm) still picks the previous version; to get the new one sooner, enter the name with the version,
-such as `dsh-claude-dashboard@2.4.0`.
+This package has no skill. Its versions after the rename are there for someone who still has it installed: updating it
+brings the current [`dsh-claude-artifacts`](https://www.npmjs.com/package/dsh-claude-artifacts), whose Artifacts page
+offers the move as an update, `claude-dashboard → claude-data`. **Update** installs `dsh-claude-data`, switched on or off
+as this one is, then uninstalls this one. The dashboards made with it open in the new one as they are. See
+[Update](https://github.com/JimLiu/baoyu-design/blob/main/dsh-plugins/README.md#update) for the rest, such as a preset that
+names this plugin.
 
 ## What is inside
 
-- `skills/claude-dashboard/`: the skill as baoyu-design publishes it (`SKILL.md`, `artifact-type/reference/`, and the
-  prebuilt `scripts/`: the editor page and `artifact.mjs`, which is also its server).
-- `lib/index.js`: the plugin. It registers the skill with the Harness skill registry and, when the skill loads, tells
-  the agent which Node executable runs `scripts/artifact.mjs`: the Host's own Node, the Node runtime the desktop app
-  ships, or `node` on PATH. Set `node` in the `claude-dashboard` row's config to choose another. That is all this row does,
-  so you can turn it off and [keep the skill to one agent preset](https://github.com/JimLiu/baoyu-design/blob/main/dsh-plugins/README.md#keep-a-skill-to-one-preset).
-- `cordis.patch.yml`: the bundle layer that mounts two rows: this plugin's, and its row of `dsh-claude-artifacts`.
-
-[`dsh-claude-artifacts`](https://www.npmjs.com/package/dsh-claude-artifacts) installs with this plugin and does the rest,
-whichever way the skill is set up: whenever the agent opens the editor it waits for comments, so a comment's **Send to Agent** box is there: send one and
-the agent wakes up, changes the dashboard, and replies in the comment. It shows what is sent as a card in the chat, and adds **Artifacts**
-to the left sidebar, one entry for all the baoyu-design plugins: the dashboards and everything else the agent has opened,
-each a click away from its conversation and editor.
-
-The editor server listens on 127.0.0.1 only and reads and writes only the dashboard's folder.
+- `lib/index.js`: the plugin, which does nothing. It is there so that a preset that names `dsh-claude-dashboard` still loads.
+- `cordis.patch.yml`: the bundle layer, with the rows the releases before the rename had: this plugin's (`claude-dashboard`),
+  and its row of `dsh-claude-artifacts` (`claude-artifacts-dashboard`).
 
 ## License
 
-Not all MIT. The plugin's own code and files (`lib/`, `cordis.patch.yml`, `locale/`, `docs/`, `icon.svg`) and the skill's local tooling are MIT, in `LICENSE`. The bundled `claude-dashboard` skill is adapted from Anthropic's claude.ai Dashboard type: its instructions, references, page and icon fonts stay Anthropic's and are not under the MIT License. `NOTICE.md` sets out which is which. The page's open-source licenses are in `skills/claude-dashboard/scripts/editor/third-party-licenses.txt`.
+MIT, in `LICENSE`. `NOTICE.md` sets out what in the baoyu-design plugins is not.

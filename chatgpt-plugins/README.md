@@ -9,7 +9,7 @@ Each folder here is a plugin for the ChatGPT desktop app and Codex, which load t
 | [Baoyu Slides](baoyu-slides/)<br>`baoyu-slides` | `claude-slides` | Editable slide decks: present, retype, drag, export PDF, HTML or PowerPoint |
 | [Baoyu Canvas](baoyu-canvas/)<br>`baoyu-canvas` | `claude-design` | Editable design canvases: artboards side by side, retype copy, adjust tweaks |
 | [Baoyu Design System](baoyu-design-system/)<br>`baoyu-design-system` | `claude-design-system` | Design systems: tokens, type, components, assets and a brand book |
-| [Baoyu Dashboard](baoyu-dashboard/)<br>`baoyu-dashboard` | `claude-dashboard` | Data-backed dashboards whose Sources panel shows where every number comes from |
+| [Baoyu Data](baoyu-data/)<br>`baoyu-data` | `claude-data` | Data-backed dashboards whose Sources panel shows where every number comes from |
 | [Baoyu Motion](baoyu-motion/)<br>`baoyu-motion` | `claude-motion`<br>`motion-director`<br>`dataviz` | Animated films written scene by scene, exported to MP4 or GIF, with a director skill |
 | [Baoyu Whiteboard](baoyu-whiteboard/)<br>`baoyu-whiteboard` | `claude-whiteboard` | Whiteboards of diagrams, flows and ideas: move, draw, comment |
 | [Baoyu Dataviz](baoyu-dataviz/)<br>`baoyu-dataviz` | `dataviz` | A method for any chart: choosing a form, a color formula with a validator, mark specs |

@@ -1,4 +1,4 @@
-// dsh-claude-slides 2.13.0: built from baoyu-design.
+// dsh-claude-slides 2.15.2: built from baoyu-design.
 var define_PLUGIN_default = { name: "claude-slides", provider: "dsh-claude-slides", skills: [{ name: "claude-slides", description: "Make and revise slide decks in the Slides artifact format (project/deck.json plus one HTML file per slide) as local files, then open them in a local slide editor where the user can present, retype, drag, and export PDF, HTML or PowerPoint. Use when the user asks for an editable slide deck or presentation in this format, names claude-slides or the Slides type, or wants to revise a folder that holds project/deck.json. Not for a one-off single-file HTML deck or prototype.", comments: true }] };
 
 import { readFile } from "node:fs/promises";
@@ -110,13 +110,14 @@ function runtimeSection(skill, skillDir, node, platform = process.platform, watc
       skill.commentsBy === "mention" ? "(read the block, change the doc with `update`, then `comment-reply`)." : "(change the files, then `comment-reply`).",
       "So do not start `comments --wait` yourself, where Comments says to: run `open` in the foreground (not",
       "`run_in_background`), and the wait starts with it. It stops when the editor stops; after `stop`, the next `open`",
-      "starts it again.",
+      "starts it again. Harness starts the next wait when your turn ends, which is where this skill says to wait again:",
+      "finish what a message asks for in the turn that takes it.",
       ...skill.commentsBy === "mention" ? ["", "When you first give the link, tell the user that a comment with `@agent` in it reaches you (type `@` and pick agent)."] : [],
       ...skill.requests ? [
         "",
         "The page's buttons reach you the same way: a request one of them sends arrives as such a message, under",
-        "`requests` (its words in `text`, the button in `label`). Those are the user's words, as if typed here: handle",
-        "them as this skill says for those words."
+        "`requests` (the button in `label`, what it asks in `text`), as `comments <root> --wait` printed it for that",
+        "page. It is a request from the page wherever this skill speaks of one: handle it as this skill says for those."
       ] : []
     );
   }

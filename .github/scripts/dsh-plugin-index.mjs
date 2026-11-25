@@ -60,14 +60,19 @@ function fail(message) {
   process.exit(1);
 }
 
-/** The packages in the folders of dsh-plugins/, by package name, with the version each folder holds. */
+/**
+ * The packages in the folders of dsh-plugins/, by package name, with the version each folder holds. A plugin that was
+ * renamed (`baoyuDesign.renamedTo`) is left out: its package under the old name has no skill, and is only there so that
+ * someone who has it gets updated to the new one.
+ */
 function localPlugins() {
   const dir = path.join(root, 'dsh-plugins');
   const found = fs.existsSync(dir)
     ? fs.readdirSync(dir).sort().flatMap((entry) => {
       const file = path.join(dir, entry, 'package.json');
       if (!fs.existsSync(file)) return [];
-      const { name, version } = JSON.parse(fs.readFileSync(file, 'utf8'));
+      const { name, version, baoyuDesign } = JSON.parse(fs.readFileSync(file, 'utf8'));
+      if (typeof baoyuDesign?.renamedTo === 'string') return [];
       return [{ name, version }];
     })
     : [];

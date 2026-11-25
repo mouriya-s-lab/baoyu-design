@@ -1,4 +1,4 @@
-// dsh-claude-design-system 2.13.0: built from baoyu-design.
+// dsh-claude-design-system 2.15.2: built from baoyu-design.
 var define_PLUGIN_default = { name: "claude-design-system", provider: "dsh-claude-design-system", skills: [{ name: "claude-design-system", description: "Create and revise design systems in the Design System artifact format (project/design-system.json, tokens.json, a README brand book, component previews, fonts and asset groups) as local files, then open them in a local design-system page where the user can browse and edit tokens, type, components and assets. Use when the user asks for a design system or brand kit in this format, built from a code repository, a design tool or scratch, names claude-design-system or the Design System type, or wants to revise a folder that holds project/design-system.json. claude-slides and claude-design install these systems. Not for a free-form HTML style guide, UI kit or token page.", comments: true }] };
 
 import { readFile } from "node:fs/promises";
@@ -110,13 +110,14 @@ function runtimeSection(skill, skillDir, node, platform = process.platform, watc
       skill.commentsBy === "mention" ? "(read the block, change the doc with `update`, then `comment-reply`)." : "(change the files, then `comment-reply`).",
       "So do not start `comments --wait` yourself, where Comments says to: run `open` in the foreground (not",
       "`run_in_background`), and the wait starts with it. It stops when the editor stops; after `stop`, the next `open`",
-      "starts it again.",
+      "starts it again. Harness starts the next wait when your turn ends, which is where this skill says to wait again:",
+      "finish what a message asks for in the turn that takes it.",
       ...skill.commentsBy === "mention" ? ["", "When you first give the link, tell the user that a comment with `@agent` in it reaches you (type `@` and pick agent)."] : [],
       ...skill.requests ? [
         "",
         "The page's buttons reach you the same way: a request one of them sends arrives as such a message, under",
-        "`requests` (its words in `text`, the button in `label`). Those are the user's words, as if typed here: handle",
-        "them as this skill says for those words."
+        "`requests` (the button in `label`, what it asks in `text`), as `comments <root> --wait` printed it for that",
+        "page. It is a request from the page wherever this skill speaks of one: handle it as this skill says for those."
       ] : []
     );
   }

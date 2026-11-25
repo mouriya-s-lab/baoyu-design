@@ -5,14 +5,14 @@
 //   node show.mjs <root> --close   close the Tern browser blocks showing this editor (run before `artifact.mjs stop`)
 //
 // Prints one JSON object. Outside a Tern pane nothing is opened: {"shown":"none","url"}. For the kinds whose editor
-// takes comments (slides, design, design-system), `next` is the command that listens for comments sent to the agent.
+// takes comments (slides, design, design-system, data), `next` is the command that listens for comments sent to the agent.
 // Tern owns its blocks: every run asks `tern browser {"op":"blocks"}` and keeps no record of its own.
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 
 const STATE_FILE = ".artifact-server.json";
-const COMMENT_KINDS = new Set(["slides", "design", "design-system"]);
+const COMMENT_KINDS = new Set(["slides", "design", "design-system", "data"]);
 
 /** @typedef {{ kind: "tern", exe: string, pane: number } | { kind: "none", reason: string }} Host */
 /** @typedef {{ block: number, url: string, owner: number | null, shown: boolean, driven: boolean }} BrowserBlock */

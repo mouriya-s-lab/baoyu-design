@@ -4,6 +4,57 @@ English | [中文](./CHANGELOG.zh.md)
 
 All notable changes to `baoyu-design` are tracked in this file.
 
+## 2.15.2 - 2026-11-12
+
+### Features
+- **`claude-design`: see a page at another screen width, and save the whole page at that width as a PNG.** Open an artboard full window (the toolbar's **Play**, then the artboard) and pick **Fill**: next to Fill/Fit is a width control. It follows the window, or lays the page out at Phone 390, Tablet 768, 1024, 1280, 1440 or 1920 px (and the artboard's own width when it is none of these), centred, and scaled down to fit when wider than the window, with the scale shown beside the width. Whenever that width is not the artboard's own, the artboard's **Export** offers **PNG 1×, this width** and **PNG 2×, this width**: the whole page laid out at that width, as tall as its content, saved as `<name>-<width>w@<scale>x.png`. `SKILL.md` tells the agent to point users there when they ask for a page at a screen width or a full-page screenshot (requested by @hh0592821, [#42](https://github.com/JimLiu/baoyu-design/issues/42)).
+
+## 2.15.1 - 2026-11-12
+
+### Fixes
+- DeepSeek Harness: the **Artifacts** page showed one artifact to a row, each card as wide as the page. Since 2.14.1 a style meant for one card's drawing also applied to the whole list. The list is a grid of cards again.
+- DeepSeek Harness: a plugin that was added from a folder and later uninstalled got no tile under **Make something new**, and the page could not install it. Its files stay in the profile after the uninstall, and the page took them for a plugin that is installed and switched off. The page now goes by what the app's plugin manager counts as installed, so the plugin gets its **Not installed** tile and installs from there.
+
+## 2.15.0 - 2026-11-11
+
+### Features
+- **`claude-motion` follows claude.ai's 2026-11-10 update.** A film that has a `narration.js` but no voice track of its own gets a **Voiceover** section under Tweaks in the side panel and a voiceover lane under the timeline. Change a line and click **Record changes**: the edit reaches the agent as a request (`comments --wait` prints it under `requests`; with no agent listening, the text is there to copy). A film with a voice track of its own (`modules/voice.json`) keeps its **Script** tab and lanes. `write-db` now refuses to write the records the page keeps of what you set by hand (`modules/retyped.json`, `recolored.json`, `recut.json`, `refaced.json`, `retouched.json`, `fetched-fonts.json`) and says `PAGE_ONLY`.
+- **`claude-design-system` follows claude.ai's 2026-11-10 update.** Edits are saved as soon as the page is hidden (you switch tabs, say) instead of waiting for the autosave. A toast you close hands the focus back to where it was, and F6 reaches it.
+- **`claude-slides` follows claude.ai's 2026-11-10 update.** A slide that can't be read, or whose markup may be partly hidden, says so on the slide and in the inspector, with **Ask the agent to fix** (with no conversation listening it copies a prompt to paste). A selected SVG image can't be set to Cover or Hug, and the inspector says why: it would change when the presentation reopens. While presenting, a swipe that starts on the page-number strip no longer turns the slide. A `deck.json` with a `format` this version doesn't know opens read-only, with a banner that it was saved by a newer version of Slides, and is not rewritten. Tables are saved with a wrapper for each row and with table, row and cell roles, so columns line up and screen readers read them as tables.
+- **Every editor draws Markdown in comments.** Markdown in a comment or an agent's reply (bold, code, lists, quotes and so on) is drawn, not shown as characters; the **All comments** list keeps each row to flat text. The new-comment card shows a focus ring while you type in it.
+- **DeepSeek Harness: the Artifacts page's type tiles follow claude.ai's "Make something new" row.** Each type is a tile with a pastel wash and a chalk doodle (dark mode swaps wash and ink), with redrawn type icons and a Beta badge on Data, Whiteboard and Motion. Rest the pointer on a tile, or Tab to it, and a card shows the type's name, what it makes and whether it is installed, with a button to start one, install it, or see the install. Escape closes the card; touch skips it.
+
+### Fixes
+- `claude-slides`: its third-party licenses notice now carries the OfficeGen attribution that pptxgenjs's source header names.
+
+### Documentation
+- `claude-motion`'s `SKILL.md` and reference follow the same update. The agent ends with the film's url. A film for a loop, a GIF or a lobby screen has no score unless one is asked for. A request that says both what the film is for and how it should look skips the questions form. Plain films start from Inter and Space Grotesk. `by-hand.md` covers the page's records of lines retyped and colors set by hand.
+
+## 2.14.1 - 2026-11-11
+
+### Features
+- **DeepSeek Harness: open your work from another device.** When Harness runs on one computer and you use it from another (`dsh web` on a server, opened in a browser on your laptop or phone over the same network or a tailnet), opening an item from **Artifacts**, or **View thread** on a comment card, gave a `http://127.0.0.1:…` link that only that computer can open. The plugin now gives the device you are on a link of its own, at the address your browser reaches Harness by, and opens it in a new tab. Through it you are the editor's owner, as on that computer: you edit, and **Send to Agent** is there. Behind a proxy or a domain of your own, set `BAOYU_DESIGN_REMOTE_HOST` to the address other devices reach that computer at; `off` turns this off. Every editor's `open` takes `--remote[=<host>]` to print that owner's link (`--remote=off` closes it), and `share <folder> --reset owner` replaces its key. See [Use it from another device](https://github.com/JimLiu/baoyu-design/blob/main/dsh-plugins/README.md#use-it-from-another-device) (requested by @akaDeyve, [#40](https://github.com/JimLiu/baoyu-design/issues/40)).
+- **DeepSeek Harness: `dsh-claude-dashboard` updates to `dsh-claude-data`.** The Artifacts page names the type **Data**, and offers an installed `dsh-claude-dashboard` as an update, `claude-dashboard → claude-data`: **Update** installs `dsh-claude-data`, switched on or off as the old one was, then uninstalls `dsh-claude-dashboard`. A preset that names `dsh-claude-dashboard` keeps it, and the page says what to change. 2.14.0 said `dsh-claude-dashboard` would get no more updates; instead it keeps getting releases with no skill in them. An Artifacts page from 2.13.0 or earlier offers that release as an update, and it brings the page that offers the move, so click **Update** once more when the move shows.
+
+### Fixes
+- `claude-design-system`: a guest on a **Share** link could not add an asset or a font. The page stayed at **Adding …**, because a page served over plain http on the network lacks the browser's hashing that the upload used. It now hashes the file itself.
+- DeepSeek Harness: uninstalling the plugin that was running the Artifacts page left the page at a 404 until the app restarted. Another installed plugin now takes it over at once.
+
+## 2.14.0 - 2026-11-11
+
+### Features
+- **`claude-dashboard` is now `claude-data`.** claude.ai renamed the type to Data, and the skill, its DeepSeek Harness plugin (`dsh-claude-data`) and its ChatGPT and Codex plugin (**Baoyu Data**) follow. Call it as `/claude-data` (`$claude-data` in Codex). A dashboard made with `claude-dashboard` opens in `claude-data` as it is, with the same folder; its address is now `/data/<id>/` instead of `/dashboard/<id>/`. `dsh-claude-dashboard` and **Baoyu Dashboard** get no more updates: install `dsh-claude-data` (the **Artifacts** page offers it as a **Not installed** tile) or **Baoyu Data**, then remove the old one. On the Artifacts page, dashboards opened before the rename are listed with the new kind and still open, and comments sent from a dashboard reach the agent through `dsh-claude-data` (the copy of `dsh-claude-data` put on npm on its own before this release lacked both, because the Host plugin it came with did not know the new name).
+- **`claude-data` follows claude.ai's 2026-11-10 update.** A dashboard's toolbar now has a **Design** button. It shows the look in use and a new **Style** section: chart colors, page color, font, corners and text size. A change shows on the page at once and is kept with **Save**; **Reset all** goes back to the defaults. A dataset can be a text file (`format: "text"`), which the page turns into rows with a loader. `dash/meta` takes the page's language (`lang`). `check` also reports what the open page found when it checked itself (`pageCheck`: passed, failed with what went wrong, or still loading) beside the page's `runs`.
+- **`claude-design` follows claude.ai's 2026-11-10 update.** Pen, Line and Arrow have a **Drawing options** bar: four stroke weights, and solid, dashed or dotted lines. An artboard's export menu has **All artboards (.png)**, a zip with one PNG per artboard on the page. When the canvas's saved layout is damaged, the canvas turns read-only with a banner and an **Ask the agent to fix** button, and comes back on its own once the file is fixed. A new reference, `shaders.md`, is how the agent makes a shader artboard (WebGL, or anything that moves like light, water, smoke or liquid).
+
+### Fixes
+- `claude-design`: artboards ran React's development build (1.1 MB), which printed warnings such as `Invalid DOM property vector-effect` for drawn lines. They now run the production build (354 KB).
+- `claude-design`: when two tabs changed the same artboard and you chose **Keep both**, the copy was put 80 px right of the original, where it could cover another artboard. It now goes in the first free spot right of that row.
+- In every editor, Escape pressed while the keyboard is in the comments layer (on the comments button, say) now ends comment mode, as it does on the page.
+
+### Documentation
+- `claude-data`'s `SKILL.md` and reference follow the same update: what runs where (each reader's browser loads the datasets, and Sources shows where every number came from), what a page's code may write and when, and how `check` and `runs` report a page that went wrong.
+
 ## 2.13.0 - 2026-11-10
 
 ### Features

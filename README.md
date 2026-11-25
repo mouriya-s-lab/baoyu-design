@@ -30,7 +30,7 @@ No website, no separate subscription, no upload step. The agent already on your 
 | [`claude-slides`](skills/claude-slides/) | Slide decks: `project/deck.json` plus one HTML file per slide | The slides editor: present, retype, drag; export PDF, HTML or PowerPoint |
 | [`claude-design`](skills/claude-design/) | A canvas of artboards: `project/canvas.json` plus `.dc.html` Design Components | The canvas editor: artboards side by side, play prototypes, retype copy, adjust tweaks; export HTML, PDF, PNG or HTML for Figma |
 | [`claude-design-system`](skills/claude-design-system/) | Design systems: tokens, a README brand book, component previews, fonts, asset groups | The design system editor: browse and edit colors, type, components and assets |
-| [`claude-dashboard`](skills/claude-dashboard/) | Data‑backed dashboards: datasets (CSV, TSV, JSON) and a page of charts, numbers and tables over them | The dashboard page: live charts, filters, and a Sources panel that traces every number to its rows |
+| [`claude-data`](skills/claude-data/) | Data‑backed dashboards: datasets (CSV, TSV, JSON) and a page of charts, numbers and tables over them | The dashboard page: live charts, filters, and a Sources panel that traces every number to its rows |
 | [`claude-motion`](skills/claude-motion/) | Motion films: animated videos, 10–30 s unless you ask for more and 15 minutes at most, written as code scene by scene into the film's own store under `<root>/db/` | The Motion player: watch it fill in, retype lines, drag scene lengths, adjust style and tweaks; export MP4 or GIF |
 | [`motion-director`](skills/motion-director/) | A finished film with something to say: it finds the point, writes the narration for the ear, has it voiced, times every scene to the words, and checks the frames as a viewer would. Needs `claude-motion` beside it | The same Motion player, open from the first minute |
 | [`claude-whiteboard`](skills/claude-whiteboard/) | Whiteboards: diagrams, flows, maps of ideas, plans and comparisons, written as elements (blocks, sections, arrows, tables, sticky notes, drawings, working embeds) into the board's own store under `<root>/db/` | The board editor: move, resize, type, draw with the pen, add sections, sticky notes, shapes and stickers |
@@ -62,7 +62,7 @@ A deck is `project/deck.json` plus one HTML file per slide. In the editor you ca
 
 <img src="assets/screenshots/claude-design-canvas.webp" alt="A coffee subscription landing page and its mobile signup form side by side on the claude-design canvas" width="880">
 
-A canvas holds artboards side by side: `project/canvas.json` plus one `.dc.html` Design Component per artboard. Play an artboard as a working prototype, on the canvas or full screen; retype copy, adjust tweaks and leave notes; export the whole design as a standalone HTML page, a PDF or PNG images (1× or 2×, several artboards in a .zip); **HTML for Figma** saves the artboards as a page without frames, for Figma's Chrome extension to capture. *Above: the landing hero of a coffee subscription, with its mobile signup form beside it.*
+A canvas holds artboards side by side: `project/canvas.json` plus one `.dc.html` Design Component per artboard. Play an artboard as a working prototype, on the canvas or full screen; retype copy, adjust tweaks and leave notes; export the whole design as a standalone HTML page, a PDF or PNG images (1× or 2×, several artboards in a .zip); **HTML for Figma** saves the artboards as a page without frames, for Figma's Chrome extension to capture. Full window, an artboard lays out at a screen width you pick (phone, tablet or desktop sizes), and its Export saves the whole page at that width as a PNG. *Above: the landing hero of a coffee subscription, with its mobile signup form beside it.*
 
 ### `claude-design-system`: design systems
 
@@ -70,9 +70,9 @@ A canvas holds artboards side by side: `project/canvas.json` plus one `.dc.html`
 
 A design system is tokens, a README brand book, component previews, fonts and asset groups. In the editor you browse and edit colors, type, spacing, radii, shadows, components and assets. Import one from a component library and its previews are the real components, live and interactive. Decks and canvases can install it: their editors' Theme and color menus then offer its colors and text styles. *Above: Nimbus, a small design system for a weather app.*
 
-### `claude-dashboard`: data‑backed dashboards
+### `claude-data`: data‑backed dashboards
 
-<img src="assets/screenshots/claude-dashboard.webp" alt="An X account analytics dashboard with sample data in the claude-dashboard page" width="880">
+<img src="assets/screenshots/claude-data.webp" alt="An X account analytics dashboard with sample data in the claude-data page" width="880">
 
 A dashboard is datasets (CSV, TSV or JSON) and a page of charts, numbers and tables computed from them. The charts are live, and the Sources panel traces every number back to its rows. Give the agent a newer export and it swaps the file in; the page recomputes every number. Numbers, dates and labels follow your language. *Above: a year of daily X account analytics, with sample data.*
 
@@ -113,7 +113,7 @@ The six editor skills also come as [DeepSeek Harness](https://github.com/deepsee
 | [`dsh-claude-slides`](https://www.npmjs.com/package/dsh-claude-slides) | `/claude-slides`: slide decks | [![npm](https://img.shields.io/npm/v/dsh-claude-slides)](https://www.npmjs.com/package/dsh-claude-slides) |
 | [`dsh-claude-design`](https://www.npmjs.com/package/dsh-claude-design) | `/claude-design`: a canvas of artboards | [![npm](https://img.shields.io/npm/v/dsh-claude-design)](https://www.npmjs.com/package/dsh-claude-design) |
 | [`dsh-claude-design-system`](https://www.npmjs.com/package/dsh-claude-design-system) | `/claude-design-system`: design systems | [![npm](https://img.shields.io/npm/v/dsh-claude-design-system)](https://www.npmjs.com/package/dsh-claude-design-system) |
-| [`dsh-claude-dashboard`](https://www.npmjs.com/package/dsh-claude-dashboard) | `/claude-dashboard`: data‑backed dashboards | [![npm](https://img.shields.io/npm/v/dsh-claude-dashboard)](https://www.npmjs.com/package/dsh-claude-dashboard) |
+| [`dsh-claude-data`](https://www.npmjs.com/package/dsh-claude-data) | `/claude-data`: data‑backed dashboards | [![npm](https://img.shields.io/npm/v/dsh-claude-data)](https://www.npmjs.com/package/dsh-claude-data) |
 | [`dsh-claude-motion`](https://www.npmjs.com/package/dsh-claude-motion) | `/claude-motion`: motion films | [![npm](https://img.shields.io/npm/v/dsh-claude-motion)](https://www.npmjs.com/package/dsh-claude-motion) |
 | [`dsh-claude-whiteboard`](https://www.npmjs.com/package/dsh-claude-whiteboard) | `/claude-whiteboard`: whiteboards | [![npm](https://img.shields.io/npm/v/dsh-claude-whiteboard)](https://www.npmjs.com/package/dsh-claude-whiteboard) |
 
@@ -141,9 +141,11 @@ dsh plugin --profile web add dsh-claude-design
 https://jimliu.github.io/baoyu-design/dsh-plugins/index.json
 ```
 
-**Updating.** When a new version is out, the **Artifacts** row in the sidebar gets an **Update** label, and the top of the Artifacts page says what changed: **Update all** updates the plugins together, with nothing to uninstall, and each plugin has its own **Update** if you want just one. Versions 2.9.2 and earlier don't offer it: from DeepSeek Harness 0.2.2, click **Update to x** on the plugin's page. On older apps, uninstall the plugin on the Plugins page, install it again, then quit and reopen the app. For a day after a release, adding by name still gets the previous version; Discover gets the new one right away, and so does entering the name with the version, such as `dsh-claude-design@2.4.0` (the versions are in the [changelog](CHANGELOG.md)).
+**Updating.** When a new version is out, the **Artifacts** row in the sidebar gets an **Update** label, and the top of the Artifacts page says what changed: **Update all** updates the plugins together, with nothing to uninstall, and each plugin has its own **Update** if you want just one. Versions 2.9.2 and earlier don't offer it: from DeepSeek Harness 0.2.2, click **Update to x** on the plugin's page. On older apps, uninstall the plugin on the Plugins page, install it again, then quit and reopen the app. For a day after a release, adding by name still gets the previous version; Discover gets the new one right away, and so does entering the name with the version, such as `dsh-claude-design@2.4.0` (the versions are in the [changelog](CHANGELOG.md)). Had `dsh-claude-dashboard`? It is now `dsh-claude-data`, and the Artifacts page offers the move as an update ([details](dsh-plugins/README.md#update)).
 
 Each plugin brings along [`dsh-claude-artifacts`](https://www.npmjs.com/package/dsh-claude-artifacts), the part they share: the Artifacts page, and comments reaching the agent. To have a skill only in one agent preset, see [Keep a skill to one preset](dsh-plugins/README.md#keep-a-skill-to-one-preset).
+
+Running Harness on one computer and using it from another (`dsh web` on a server, opened on your laptop or phone)? Open your work from **Artifacts**: the plugin opens the editor at an address that device reaches, with you as its owner. See [Use it from another device](dsh-plugins/README.md#use-it-from-another-device).
 
 A workspace that has its own copy of a skill (in `.agents/skills/` or `.dsh/skills/`) uses that copy instead of the plugin's. Step by step, with installing from a folder, uninstalling and what to do when something doesn't work: [`dsh-plugins/`](dsh-plugins/README.md).
 
@@ -151,7 +153,7 @@ A workspace that has its own copy of a skill (in `.agents/skills/` or `.dsh/skil
 
 ## ChatGPT plugins
 
-The same skills also come as plugins for the ChatGPT desktop app and Codex: [Baoyu Slides](chatgpt-plugins/baoyu-slides/), [Baoyu Canvas](chatgpt-plugins/baoyu-canvas/), [Baoyu Design System](chatgpt-plugins/baoyu-design-system/), [Baoyu Dashboard](chatgpt-plugins/baoyu-dashboard/), [Baoyu Motion](chatgpt-plugins/baoyu-motion/) (with `motion-director` and `dataviz`), [Baoyu Whiteboard](chatgpt-plugins/baoyu-whiteboard/) and [Baoyu Dataviz](chatgpt-plugins/baoyu-dataviz/). Add this repository as a marketplace, then install the ones you want:
+The same skills also come as plugins for the ChatGPT desktop app and Codex: [Baoyu Slides](chatgpt-plugins/baoyu-slides/), [Baoyu Canvas](chatgpt-plugins/baoyu-canvas/), [Baoyu Design System](chatgpt-plugins/baoyu-design-system/), [Baoyu Data](chatgpt-plugins/baoyu-data/), [Baoyu Motion](chatgpt-plugins/baoyu-motion/) (with `motion-director` and `dataviz`), [Baoyu Whiteboard](chatgpt-plugins/baoyu-whiteboard/) and [Baoyu Dataviz](chatgpt-plugins/baoyu-dataviz/). Add this repository as a marketplace, then install the ones you want:
 
 ```bash
 codex plugin marketplace add JimLiu/baoyu-design --sparse .agents/plugins --sparse chatgpt-plugins
@@ -205,7 +207,7 @@ npx skills add JimLiu/baoyu-design --agent codex
 npx skills add JimLiu/baoyu-design --list
 
 # Install only some of the skills
-npx skills add JimLiu/baoyu-design --skill claude-slides --skill claude-dashboard
+npx skills add JimLiu/baoyu-design --skill claude-slides --skill claude-data
 ```
 
 It installs to `.claude/skills/` for Claude Code and `.agents/skills/` for Cursor/Codex-style agents (add `-g` for the `~/`‑level user install).
@@ -235,7 +237,7 @@ The agent clones or fetches the repo, loads `SKILL.md`, and proceeds — perfect
 
 ### Use it
 
-Once a skill is installed (or fetched), ask for what you want (*"Make a 12‑slide deck from this PRD"*, *"Turn this CSV into a dashboard"*) or call one by name: `/claude-slides`, `/claude-design`, `/claude-design-system`, `/claude-dashboard`, `/claude-motion`, `/motion-director` or `/claude-whiteboard` in Claude Code, `$claude-slides` and so on in Codex. The agent writes the files under `designs/<slug>/`, starts the editor, and gives you its `http://127.0.0.1` URL.
+Once a skill is installed (or fetched), ask for what you want (*"Make a 12‑slide deck from this PRD"*, *"Turn this CSV into a dashboard"*) or call one by name: `/claude-slides`, `/claude-design`, `/claude-design-system`, `/claude-data`, `/claude-motion`, `/motion-director` or `/claude-whiteboard` in Claude Code, `$claude-slides` and so on in Codex. The agent writes the files under `designs/<slug>/`, starts the editor, and gives you its `http://127.0.0.1` URL.
 
 ---
 

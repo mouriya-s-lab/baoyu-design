@@ -1,7 +1,7 @@
 {
   "meta": {
-    "title": "Claude 数据看板",
-    "description": "加入 claude-dashboard 技能：Agent 根据你的数据文件做出数据看板（图表、数字和表格），并在本地看板编辑器里打开，来源面板会显示每个数字是从哪里来的，你也可以把评论发给 Agent 修改。",
+    "title": "Claude 数据看板（已改名 Claude 数据）",
+    "description": "已改名为 dsh-claude-data。这个版本不带技能，只带来新版「作品」页，由它把你换到 Claude 数据：在插件页打开这个插件，或者打开左侧栏的「作品」，在 claude-dashboard → claude-data 上点 Update（更新）。",
     "detail": "docs/DETAIL.zh.md"
   }
 }

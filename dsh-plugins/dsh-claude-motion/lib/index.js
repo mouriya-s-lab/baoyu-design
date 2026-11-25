@@ -1,4 +1,4 @@
-// dsh-claude-motion 2.13.0: built from baoyu-design.
+// dsh-claude-motion 2.15.2: built from baoyu-design.
 var define_PLUGIN_default = { name: "claude-motion", provider: "dsh-claude-motion", skills: [{ name: "claude-motion", description: "Use this for a local Motion film: a short animated video (10–30 s unless asked for more, 900 s at most), such as an explainer, product walkthrough or UI demo, launch teaser, logo sting, social clip, animated chart or title sequence, that plays in the bundled Motion player and exports from there to MP4 or GIF. A narrated one carries a voice track: a take a scene, made here with a speech provider of the user's or recorded by them, spoken and captioned by the player, the motion timed to its words. Everything on screen is code, a pure function of time, written scene by scene into the film's own store with this skill's script while the user watches it fill in. Read it when creating, continuing, finalizing or revising one. Not for editing real footage, subtitles or audio (that is a video editor), a still picture, a slide deck or a static HTML page.", scriptAlias: "A", comments: true, requests: true }] };
 
 import { readFile } from "node:fs/promises";
@@ -110,13 +110,14 @@ function runtimeSection(skill, skillDir, node, platform = process.platform, watc
       skill.commentsBy === "mention" ? "(read the block, change the doc with `update`, then `comment-reply`)." : "(change the files, then `comment-reply`).",
       "So do not start `comments --wait` yourself, where Comments says to: run `open` in the foreground (not",
       "`run_in_background`), and the wait starts with it. It stops when the editor stops; after `stop`, the next `open`",
-      "starts it again.",
+      "starts it again. Harness starts the next wait when your turn ends, which is where this skill says to wait again:",
+      "finish what a message asks for in the turn that takes it.",
       ...skill.commentsBy === "mention" ? ["", "When you first give the link, tell the user that a comment with `@agent` in it reaches you (type `@` and pick agent)."] : [],
       ...skill.requests ? [
         "",
         "The page's buttons reach you the same way: a request one of them sends arrives as such a message, under",
-        "`requests` (its words in `text`, the button in `label`). Those are the user's words, as if typed here: handle",
-        "them as this skill says for those words."
+        "`requests` (the button in `label`, what it asks in `text`), as `comments <root> --wait` printed it for that",
+        "page. It is a request from the page wherever this skill speaks of one: handle it as this skill says for those."
       ] : []
     );
   }

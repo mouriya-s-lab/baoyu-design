@@ -9,7 +9,7 @@
 | [Baoyu Slides](baoyu-slides/)<br>`baoyu-slides` | `claude-slides` | 可编辑的幻灯片：放映、改字、拖动，导出 PDF、HTML、PowerPoint |
 | [Baoyu Canvas](baoyu-canvas/)<br>`baoyu-canvas` | `claude-design` | 可编辑的设计画布：画板并排比较，改字、调参数 |
 | [Baoyu Design System](baoyu-design-system/)<br>`baoyu-design-system` | `claude-design-system` | 设计系统：令牌、字体、组件、素材和品牌手册 |
-| [Baoyu Dashboard](baoyu-dashboard/)<br>`baoyu-dashboard` | `claude-dashboard` | 数据仪表盘：每个数字都能追到来源 |
+| [Baoyu Data](baoyu-data/)<br>`baoyu-data` | `claude-data` | 数据仪表盘：每个数字都能追到来源 |
 | [Baoyu Motion](baoyu-motion/)<br>`baoyu-motion` | `claude-motion`<br>`motion-director`<br>`dataviz` | 动画影片：逐场景写成代码，本地播放，导出 MP4、GIF；带导演技能 |
 | [Baoyu Whiteboard](baoyu-whiteboard/)<br>`baoyu-whiteboard` | `claude-whiteboard` | 白板：示意图、流程、想法地图，拖动、画画、留评论 |
 | [Baoyu Dataviz](baoyu-dataviz/)<br>`baoyu-dataviz` | `dataviz` | 图表方法：选图形、配色公式和校验脚本、图形规范，不需要本地服务 |

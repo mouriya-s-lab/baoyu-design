@@ -1,4 +1,4 @@
-// dsh-claude-artifacts 2.13.0: built from baoyu-design.
+// dsh-claude-artifacts 2.15.2: built from baoyu-design.
 window.__ModuleLoader__.load({
 	id: "dsh-claude-artifacts",
 	factory: (require) => {
@@ -59,6 +59,28 @@ window.__ModuleLoader__.load({
 		var updatesPath = `${base}.updates`;
 		var installPath = `${base}.install`;
 
+		function isLoopbackName(name) {
+		  const n = name.toLowerCase().replace(/^\[|\]$/g, "");
+		  return n === "localhost" || n.endsWith(".localhost") || /^127\.\d+\.\d+\.\d+$/.test(n) || n === "::1" || n === "0:0:0:0:0:0:0:1" || n === "::ffff:127.0.0.1";
+		}
+		function onAnotherDevice() {
+		  if (typeof location === "undefined" || !/^https?:$/.test(location.protocol)) return false;
+		  return !isLoopbackName(location.hostname);
+		}
+		function pendingWindow() {
+		  if (typeof window === "undefined") return null;
+		  const opened = window.open("about:blank", "_blank");
+		  if (!opened) return null;
+		  try {
+		    opened.opener = null;
+		  } catch {
+		  }
+		  return {
+		    go: (url) => opened.location.replace(url),
+		    close: () => opened.close()
+		  };
+		}
+
 		function desktopBrowser() {
 		  const carrier = globalThis.dshDesktop;
 		  return carrier?.protocolVersion === 1 ? carrier.browser : void 0;
@@ -86,7 +108,7 @@ window.__ModuleLoader__.load({
 		    })()`
 		  },
 		  // The page, below the bar.
-		  "claude-dashboard": { width: 1280, height: 800, find: `document.querySelector('main')` },
+		  "claude-data": { width: 1280, height: 800, find: `document.querySelector('main')` },
 		  // The doc's frame, below the bars, at a width where the text fills it.
 		  "claude-docs": { width: 860, height: 700, find: `document.querySelector('iframe')` },
 		  // The film's first frame.
@@ -103,6 +125,19 @@ window.__ModuleLoader__.load({
 		      const zoom = document.querySelector('[data-testid="mc-zoom"]')?.closest('[role="toolbar"]');
 		      const top = zoom ? zoom.getBoundingClientRect().bottom + 8 : r.top;
 		      return { x: r.left, y: top, width: r.width, height: tools.getBoundingClientRect().top - 8 - top };
+		    })()`
+		  },
+		  // The grid, below the formula bar and above the formatting toolbar, once the workbook has loaded.
+		  "claude-sheets": {
+		    width: 1280,
+		    height: 800,
+		    find: `(() => {
+		      const grid = document.querySelector('.sheet-grid');
+		      if (!grid || !document.querySelector('[role="tab"]') || !grid.querySelector('[role="gridcell"]')) return null;
+		      const r = grid.getBoundingClientRect();
+		      const tools = [...document.querySelectorAll('[role="toolbar"]')].map(t => t.getBoundingClientRect().top).filter(top => top > r.top + r.height / 2);
+		      const bottom = Math.min(r.bottom, ...tools.map(top => top - 8));
+		      return { x: r.left, y: r.top, width: r.width, height: bottom - r.top };
 		    })()`
 		  }
 		};
@@ -270,6 +305,17 @@ window.__ModuleLoader__.load({
 		  if (again.ok && again.value !== null) return { outcome: again.value, left: "kept" };
 		  return { outcome: { application: "failed", error: { diagnostic: answer.error.message ?? "the app did not answer" } }, left: "unknown" };
 		}
+		async function removeReplaced(manager, replaced) {
+		  if ((replaced.keptBy?.length ?? 0) > 0) return null;
+		  if (manager.removeBundle === void 0) return { outcome: { application: "failed", error: { diagnostic: "this app cannot remove a plugin from here" } }, left: "kept" };
+		  try {
+		    const answer = await manager.removeBundle(replaced.name);
+		    if (answer.ok) return { outcome: answer.value, left: "kept" };
+		    return { outcome: { application: "failed", error: { diagnostic: answer.error.message ?? "the app did not answer" } }, left: "unknown" };
+		  } catch (error) {
+		    return { outcome: { application: "failed", error: { diagnostic: error.message } }, left: "unknown" };
+		  }
+		}
 		async function run(manager, only) {
 		  set({ phase: "running", failure: null, step: null, only });
 		  const answer = await readUpdates();
@@ -279,25 +325,34 @@ window.__ModuleLoader__.load({
 		  set({ to: latestOf(plan) });
 		  for (const [index, plugin] of plan.entries()) {
 		    set({ step: { name: plugin.name, index: index + 1, total: plan.length } });
-		    let outcome;
-		    let left;
-		    try {
-		      ({ outcome, left } = await install(manager, plugin, `baoyu-design-update-${Date.now()}-${index}`));
-		    } catch (error) {
-		      outcome = { application: "failed", error: { diagnostic: error.message } };
-		      left = "unknown";
+		    let outcome = { application: "applied" };
+		    let left = "kept";
+		    if (plugin.spec !== "") {
+		      try {
+		        ({ outcome, left } = await install(manager, plugin, `baoyu-design-update-${Date.now()}-${index}`));
+		      } catch (error) {
+		        outcome = { application: "failed", error: { diagnostic: error.message } };
+		        left = "unknown";
+		      }
 		    }
 		    const already = outcome.application === "failed" && outcome.error?.code === "already-installed";
 		    if (failedOutcome(outcome) && !already) {
 		      set({ phase: "failed", step: null, failure: { plugin: plugin.name, message: reasonOf(outcome), left } });
 		      return void look();
 		    }
+		    let restart = outcome.application === "restart-required";
+		    const removed = plugin.replaces === void 0 ? null : await removeReplaced(manager, plugin.replaces);
 		    const now = hub().state;
 		    set({
 		      updates: now.updates.filter((u) => u.name !== plugin.name),
-		      updated: [...(now.updated ?? []).filter((u) => u.name !== plugin.name), plugin],
-		      restart: now.restart || outcome.application === "restart-required"
+		      updated: [...(now.updated ?? []).filter((u) => u.name !== plugin.name), plugin]
 		    });
+		    if (removed !== null && failedOutcome(removed.outcome)) {
+		      set({ phase: "failed", step: null, restart: now.restart || restart, failure: { plugin: plugin.replaces.name, message: reasonOf(removed.outcome), left: removed.left, removing: true } });
+		      return void look();
+		    }
+		    restart ||= removed?.outcome.application === "restart-required";
+		    set({ restart: hub().state.restart || restart });
 		  }
 		  set({ step: null });
 		  if (plan.length === 0) close();
@@ -337,8 +392,12 @@ window.__ModuleLoader__.load({
 		    }
 		    const already = outcome.application === "failed" && outcome.error?.code === "already-installed";
 		    if (failedOutcome(outcome) && !already) return set({ install: { plugin, phase: "failed", message: reasonOf(outcome) } });
-		    const restart = outcome.application === "restart-required";
-		    set({ install: { plugin, phase: "done", ...version ? { version } : {}, ...restart ? { restart } : {} }, restart: hub().state.restart || restart });
+		    let restart = outcome.application === "restart-required";
+		    const replaced = hub().state.updates.find((u) => u.name === plugin)?.replaces;
+		    const removed = replaced === void 0 ? null : await removeReplaced(manager, replaced);
+		    restart ||= removed?.outcome.application === "restart-required";
+		    const kept = replaced !== void 0 && (removed === null || failedOutcome(removed.outcome)) ? { kept: replaced.name } : {};
+		    set({ install: { plugin, phase: "done", ...version ? { version } : {}, ...restart ? { restart } : {}, ...kept }, restart: hub().state.restart || restart });
 		    void look();
 		  })();
 		}
@@ -392,7 +451,17 @@ window.__ModuleLoader__.load({
 		  "mark.running": "更新中",
 		  "mark.failed": "更新失败",
 		  "mark.restart": "待重启",
-		  "failed.tag": "更新失败，详情见「作品」页"
+		  "failed.tag": "更新失败，详情见「作品」页",
+		  "renamed.title": "{old} 已改名为 {plugin}",
+		  "renamed": "{old} 改名为 {plugin} 了：更新会装上 {plugin}，再卸载 {old}。",
+		  "renamed.remove": "{plugin} 已经装好，更新会卸载它替换掉的 {old}。",
+		  "renamed.kept": "{old} 改名为 {plugin} 了：更新会装上 {plugin}。预设 {presets} 里写着 {old}，所以先留着它：把那里改成 dsh-{plugin}，再到插件页卸载 {old}。",
+		  "row.renamed": "{old} → {plugin}",
+		  "row.remove": "待卸载 {old}",
+		  "failed.remove": "{plugin} 没有卸载",
+		  "failed.remove.how": "到插件页卸载它；提示正在使用的话，先退出 DSH 再重新打开。",
+		  "tag.renamed": "已改名为 {plugin}",
+		  "kept": "{old} 先留着：预设 {presets} 里写着它。把那里改成 dsh-{plugin}，再到插件页卸载 {old}。"
 		};
 		var en = {
 		  "available": "baoyu-design plugins {version} is available",
@@ -426,7 +495,17 @@ window.__ModuleLoader__.load({
 		  "mark.running": "Updating",
 		  "mark.failed": "Failed",
 		  "mark.restart": "Restart",
-		  "failed.tag": "Update failed: see Artifacts"
+		  "failed.tag": "Update failed: see Artifacts",
+		  "renamed.title": "{old} is now {plugin}",
+		  "renamed": "{old} is now {plugin}: Update installs {plugin}, then removes {old}.",
+		  "renamed.remove": "{plugin} is installed. Update removes {old}, which it replaces.",
+		  "renamed.kept": "{old} is now {plugin}: Update installs {plugin}. The preset {presets} names {old}, so it stays: name dsh-{plugin} there instead, then remove {old} on the Plugins page.",
+		  "row.renamed": "{old} → {plugin}",
+		  "row.remove": "Removes {old}",
+		  "failed.remove": "{plugin} was not removed",
+		  "failed.remove.how": "Remove it on the Plugins page. If it says it is in use, quit DSH and open it again first.",
+		  "tag.renamed": "Renamed to {plugin}",
+		  "kept": "{old} stays: the preset {presets} names it. Name dsh-{plugin} there instead, then remove {old} on the Plugins page."
 		};
 		var CSS = `
 		.bdu-panel{margin:-8px 0 24px;padding:14px 16px;border-radius:12px;background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary);font-size:13px;line-height:20px}
@@ -507,17 +586,24 @@ window.__ModuleLoader__.load({
 		  flush();
 		  return blocks;
 		}
+		function renamedText(t, update, replaces) {
+		  const words = { old: pluginTitle(replaces.name), plugin: pluginTitle(update.name) };
+		  if ((replaces.keptBy?.length ?? 0) > 0) return t("renamed.kept", { ...words, presets: replaces.keptBy.join(", ") });
+		  return t(update.spec === "" ? "renamed.remove" : "renamed", words);
+		}
 		function PluginRow({ plugin, done, state: { phase, step, failure, only }, offer: { t, start: startUpdate } }) {
 		  const running = phase === "running";
 		  const failed = phase === "failed" && failure?.plugin === plugin.name;
 		  const title = pluginTitle(plugin.name);
-		  let status = `${plugin.version} → ${plugin.latest}`;
+		  const { replaces } = plugin;
+		  const name = replaces === void 0 ? title : t("row.renamed", { old: pluginTitle(replaces.name), plugin: title });
+		  let status = plugin.spec === "" && replaces !== void 0 ? t("row.remove", { old: pluginTitle(replaces.name) }) : `${replaces?.version ?? plugin.version} → ${plugin.latest}`;
 		  if (done) status = t("row.done", { version: plugin.latest });
 		  else if (running && step?.name === plugin.name) status = t("row.running");
 		  else if (running && (only ?? null) === null) status = t("row.waiting");
 		  else if (failed) status = t("row.failed");
 		  return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", { className: "bdu-plugin", "data-plugin": plugin.name, children: [
-		    /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "bdu-plugin-name", children: title }),
+		    /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "bdu-plugin-name", children: name }),
 		    /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "bdu-plugin-status", ...failed ? { "data-failed": "" } : {}, children: status }),
 		    !done && !running && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_dsh_client_ui_primitives.Button, { variant: "outline", size: "sm", "aria-label": t("update.one", { plugin: title, version: plugin.latest }), onClick: () => startUpdate(plugin.name), children: t(failed ? "retry" : "update") })
 		  ] });
@@ -547,25 +633,31 @@ window.__ModuleLoader__.load({
 		  } else if (phase === "done") {
 		    const last = updates.length > 0 ? updated?.at(-1) : void 0;
 		    title = last ? t("done.one", { plugin: pluginTitle(last.name), version: last.latest }) : t("done", { version: to });
-		    text = t(restart ? "done.restart" : "done.session");
+		    const kept = updated?.find((u) => (u.replaces?.keptBy?.length ?? 0) > 0);
+		    const keptText = kept?.replaces === void 0 ? "" : ` ${t("kept", { old: pluginTitle(kept.replaces.name), plugin: pluginTitle(kept.name), presets: kept.replaces.keptBy.join(", ") })}`;
+		    text = `${t(restart ? "done.restart" : "done.session")}${keptText}`;
 		    actions = /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
 		      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_dsh_client_ui_primitives.Button, { variant: "outline", size: "sm", onClick: close, children: t("close") }),
 		      updates.length > 1 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_dsh_client_ui_primitives.Button, { variant: "primary", size: "sm", onClick: () => startUpdate(), children: t("update.all") })
 		    ] });
 		  } else if (phase === "failed" && failure) {
-		    title = t("failed", { plugin: pluginTitle(failure.plugin) });
+		    title = t(failure.removing ? "failed.remove" : "failed", { plugin: pluginTitle(failure.plugin) });
 		    const left = failure.left ?? "kept";
-		    text = `${failure.message} ${t(`failed.${left}`)}`;
+		    text = `${failure.message} ${t(failure.removing ? "failed.remove.how" : `failed.${left}`)}`;
 		    const retry = (only ?? null) === null ? updates.length > 0 : rows.length <= 1 && updates.some((u) => u.name === only);
 		    actions = /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
 		      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_dsh_client_ui_primitives.Button, { variant: "outline", size: "sm", onClick: close, children: t("close") }),
 		      retry && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_dsh_client_ui_primitives.Button, { variant: "primary", size: "sm", onClick: () => startUpdate(only), children: t("retry") })
 		    ] });
 		  } else {
-		    title = t("available", { version: latest });
+		    const installs = updates.some((u) => u.spec !== "");
+		    const swap = updates.find((u) => u.replaces !== void 0);
+		    title = installs || swap?.replaces === void 0 ? t("available", { version: latest }) : t("renamed.title", { old: pluginTitle(swap.replaces.name), plugin: pluginTitle(swap.name) });
+		    const current = rows.length > 1 || swap !== void 0 ? "" : `${t("current", { plugin: pluginTitle(updates[0].name), version: updates[0].version })} `;
 		    text = /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
-		      rows.length > 1 ? "" : `${t("current", { plugin: pluginTitle(updates[0].name), version: updates[0].version })} `,
-		      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", { href: base2, target: "_blank", rel: "noreferrer", children: t("changelog") })
+		      current,
+		      swap?.replaces !== void 0 && `${renamedText(t, swap, swap.replaces)} `,
+		      installs && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", { href: base2, target: "_blank", rel: "noreferrer", children: t("changelog") })
 		    ] });
 		    actions = /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
 		      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_dsh_client_ui_primitives.Button, { variant: "outline", size: "sm", onClick: later, children: t("later") }),
@@ -613,10 +705,11 @@ window.__ModuleLoader__.load({
 		  ] });
 		}
 		var Refresh = import_dsh_client_ui_primitives.IconRefreshOutlineRegular;
+		var pageUpdate = (updates, name) => name === void 0 ? void 0 : updates.find((u) => u.replaces?.name === name) ?? updates.find((u) => u.name === name && u.spec !== "" && !u.native);
 		function DetailAction({ subject, t, startUpdate }) {
 		  const { phase, updates } = useUpdates();
-		  const update = updates.find((u) => u.name === subject?.pkg?.name);
-		  if (subject?.kind !== "bundle" || update === void 0 || update.native) return null;
+		  const update = pageUpdate(updates, subject?.pkg?.name);
+		  if (subject?.kind !== "bundle" || update === void 0) return null;
 		  const running = phase === "running";
 		  return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
 		    import_dsh_client_ui_primitives.Button,
@@ -636,8 +729,9 @@ window.__ModuleLoader__.load({
 		  const { phase, updates, failure } = useUpdates();
 		  if (subject?.kind !== "bundle") return null;
 		  if (phase === "failed" && failure?.plugin === subject.pkg?.name) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_dsh_client_ui_primitives.Tag, { tone: "neutral", children: t("failed.tag") });
-		  const update = updates.find((u) => u.name === subject.pkg?.name);
-		  if (update === void 0 || update.native) return null;
+		  const update = pageUpdate(updates, subject.pkg?.name);
+		  if (update === void 0) return null;
+		  if (update.replaces?.name === subject.pkg?.name) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_dsh_client_ui_primitives.Tag, { tone: "info", children: t("tag.renamed", { plugin: pluginTitle(update.name) }) });
 		  return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_dsh_client_ui_primitives.Tag, { tone: "info", children: t("tag", { version: update.latest }) });
 		}
 		function pageUpdates(ctx) {
@@ -675,7 +769,7 @@ window.__ModuleLoader__.load({
 		}
 
 		var import_jsx_runtime2 = require("react/jsx-runtime");
-		var PAGE_VERSION = 6;
+		var PAGE_VERSION = 7;
 		var PLUGINS_PANEL_ID = "plugins";
 		var PANEL_ID = "baoyu-design.artifacts";
 		var NS2 = "baoyu-design-artifacts";
@@ -754,20 +848,22 @@ window.__ModuleLoader__.load({
 		  "type.claude-slides": "幻灯片",
 		  "type.claude-design": "设计",
 		  "type.claude-design-system": "设计系统",
-		  "type.claude-dashboard": "看板",
+		  "type.claude-data": "数据",
 		  "type.claude-docs": "文档",
 		  "type.claude-motion": "动画",
 		  "type.claude-whiteboard": "白板",
+		  "type.claude-sheets": "表格",
 		  "create.heading": "新建",
 		  "create.new": "新建",
 		  "create.session": "新会话",
 		  "prompt.claude-slides": "帮我做一份幻灯片，主题是：",
 		  "prompt.claude-design": "帮我设计：",
 		  "prompt.claude-design-system": "帮我做一套设计系统，品牌是：",
-		  "prompt.claude-dashboard": "帮我做一个数据看板，数据是：",
+		  "prompt.claude-data": "帮我做一个数据看板，数据是：",
 		  "prompt.claude-docs": "帮我写一份文档，内容是：",
 		  "prompt.claude-motion": "帮我做一段动画，内容是：",
 		  "prompt.claude-whiteboard": "帮我在白板上画出：",
+		  "prompt.claude-sheets": "帮我做一张表格，用来：",
 		  "view.list": "列表视图",
 		  "view.grid": "网格视图",
 		  "filter.button": "排序和筛选",
@@ -809,6 +905,7 @@ window.__ModuleLoader__.load({
 		  "delete.keeps": "这会把它从作品里移除。它的文件夹里还有别的文件，所以留在原处：{path}",
 		  "delete.confirm": "删除",
 		  "toast.copied": "链接已复制到剪贴板。",
+		  "toast.copyRemote": "编辑器的链接只在运行 Harness 的电脑上能打开，这里打开的那个是你本人的入口，不能给别人。要分享，在编辑器里点“分享”。",
 		  "toast.deleted": "已删除“{title}”。",
 		  "toast.removed": "已从作品里移除“{title}”，文件夹还在原处。",
 		  "toast.undo": "撤销",
@@ -821,20 +918,27 @@ window.__ModuleLoader__.load({
 		  "open.pluginOff": "没有安装 {plugin} 插件，打不开这个作品。",
 		  "open.failed": "打不开：{message}",
 		  "open.noSession": "原来的对话已不在，编辑器在新窗口里打开了。",
+		  "open.remoteOld": "{plugin} 插件的版本较旧，没法在另一台设备上打开这个作品：更新它后再试。",
+		  "open.blocked": "浏览器拦下了新窗口：允许这个网站弹出窗口后再试。",
 		  "action.failed": "没有做成：{message}",
 		  "tile.missing": "未安装",
 		  "tile.installing": "正在安装…",
 		  "tile.failed": "没有装上",
 		  "tile.restart": "重启后可用",
 		  "tile.installed": "已安装",
-		  "tile.hint": "{type}：还没安装，点一下安装",
-		  "about.claude-slides": "做可以编辑的幻灯片，能直接演示，也能导出 PDF、HTML 或 PowerPoint。",
-		  "about.claude-design": "在一张画布上并排做几版设计稿，每一版都能直接改。",
-		  "about.claude-design-system": "做一套设计系统：颜色、字体、组件、素材，加一本品牌手册。",
-		  "about.claude-dashboard": "用你的数据文件做看板：图表、数字和表格，数据变了就跟着更新。",
-		  "about.claude-docs": "写可以编辑、评论和分享的文档。",
-		  "about.claude-motion": "做短动画，导出 MP4 或 GIF。",
-		  "about.claude-whiteboard": "在白板上摆出示意图、流程和想法，可以拖动、画画、留评论。",
+		  "tile.beta": "Beta",
+		  "peek.by": "来自 baoyu-design",
+		  "peek.start": "从提示词开始",
+		  "peek.install": "安装…",
+		  "peek.details": "查看安装情况",
+		  "about.claude-docs": "团队一起读、评论、直接修改的文档，Agent 负责让它保持最新。",
+		  "about.claude-slides": "能直接演示的幻灯片，可以套用设计系统换风格，也能导出成 PowerPoint。",
+		  "about.claude-sheets": "带公式和格式的表格，你和 Agent 一起填。",
+		  "about.claude-design": "界面、流程和图形，作为画板排在同一张画布上，也可以动手改。",
+		  "about.claude-design-system": "颜色、字体、组件和素材，幻灯片和设计都照着它来做。",
+		  "about.claude-data": "用你的数据做的图表、数字和表格，每一项都标明出处。",
+		  "about.claude-whiteboard": "方框、箭头和便利贴，你和 Agent 都能在上面画。",
+		  "about.claude-motion": "一段在页面里直接播放的短动画，可以导出成视频。",
 		  "install.title": "安装「{type}」插件？",
 		  "install.body": "点「安装」会装上 {plugin} 插件，装好后点这个入口就能新建。",
 		  "install.manual": "到「插件」页搜索 {plugin} 并安装，装好后点这个入口就能新建。",
@@ -849,6 +953,8 @@ window.__ModuleLoader__.load({
 		  "install.failed": "「{type}」没有装上",
 		  "install.retry": "重试",
 		  "install.start": "新建",
+		  "install.replaces": "它是 {old} 的新名字：装好后会卸载 {old}。",
+		  "install.kept": "{old} 还在，到「插件」页卸载它。",
 		  "dialog.close": "关闭"
 		};
 		var en2 = {
@@ -860,20 +966,22 @@ window.__ModuleLoader__.load({
 		  "type.claude-slides": "Slides",
 		  "type.claude-design": "Design",
 		  "type.claude-design-system": "Design system",
-		  "type.claude-dashboard": "Dashboard",
+		  "type.claude-data": "Data",
 		  "type.claude-docs": "Docs",
 		  "type.claude-motion": "Motion",
 		  "type.claude-whiteboard": "Whiteboard",
+		  "type.claude-sheets": "Sheets",
 		  "create.heading": "Make something new",
 		  "create.new": "New",
 		  "create.session": "New session",
 		  "prompt.claude-slides": "Make me a slide deck about: ",
 		  "prompt.claude-design": "Design this for me: ",
 		  "prompt.claude-design-system": "Make me a design system for this brand: ",
-		  "prompt.claude-dashboard": "Make me a dashboard from this data: ",
+		  "prompt.claude-data": "Make me a dashboard from this data: ",
 		  "prompt.claude-docs": "Write me a doc about: ",
 		  "prompt.claude-motion": "Make me an animation about: ",
 		  "prompt.claude-whiteboard": "Lay this out on a whiteboard: ",
+		  "prompt.claude-sheets": "Make me a spreadsheet for: ",
 		  "view.list": "List view",
 		  "view.grid": "Grid view",
 		  "filter.button": "Sort and filter",
@@ -915,6 +1023,7 @@ window.__ModuleLoader__.load({
 		  "delete.keeps": "This takes it off your artifacts. Its folder holds other files too, so it stays where it is: {path}",
 		  "delete.confirm": "Delete",
 		  "toast.copied": "Link copied to clipboard.",
+		  "toast.copyRemote": "An editor's link opens only on the computer that runs Harness, and the one opened here is your own way in, not for others. To share it, use Share in the editor.",
 		  "toast.deleted": "Deleted “{title}”.",
 		  "toast.removed": "Took “{title}” off your artifacts. Its folder stays where it is.",
 		  "toast.undo": "Undo",
@@ -927,20 +1036,27 @@ window.__ModuleLoader__.load({
 		  "open.pluginOff": "The {plugin} plugin is not installed, so this artifact cannot open.",
 		  "open.failed": "Could not open it: {message}",
 		  "open.noSession": "The conversation is gone, so the editor opened in a new window.",
+		  "open.remoteOld": "The {plugin} plugin is of an earlier release, which cannot open this artifact on another device: update it and try again.",
+		  "open.blocked": "The browser blocked the new window: allow pop-ups for this site and try again.",
 		  "action.failed": "That did not work: {message}",
 		  "tile.missing": "Not installed",
 		  "tile.installing": "Installing…",
 		  "tile.failed": "Did not install",
 		  "tile.restart": "Restart to use",
 		  "tile.installed": "Installed",
-		  "tile.hint": "{type}: not installed yet. Click to install it.",
-		  "about.claude-slides": "Editable slide decks you can present, or export as PDF, HTML or PowerPoint.",
-		  "about.claude-design": "Design canvases with versions side by side, each one editable.",
-		  "about.claude-design-system": "Design systems: colors, type, components, assets and a brand book.",
-		  "about.claude-dashboard": "Dashboards over your data files: charts, numbers and tables that follow the data.",
-		  "about.claude-docs": "Docs you can edit, comment on and share.",
-		  "about.claude-motion": "Short animated films you can export as MP4 or GIF.",
-		  "about.claude-whiteboard": "Whiteboards of diagrams, flows and ideas you move, draw on and comment on.",
+		  "tile.beta": "Beta",
+		  "peek.by": "By baoyu-design",
+		  "peek.start": "Start with a prompt",
+		  "peek.install": "Install…",
+		  "peek.details": "See the install",
+		  "about.claude-docs": "A document your team reads, comments on and edits in place while the agent keeps it current.",
+		  "about.claude-slides": "A deck you can present, restyle with a design system and export to PowerPoint.",
+		  "about.claude-sheets": "A grid with formulas and formatting that you and the agent fill in together.",
+		  "about.claude-design": "Screens, flows and graphics laid out as artboards on one canvas you can edit by hand.",
+		  "about.claude-design-system": "Colors, type, components and assets that your decks and designs are built from.",
+		  "about.claude-data": "Charts, numbers and tables from your data, each marked with its source.",
+		  "about.claude-whiteboard": "Boxes, arrows and sticky notes you and the agent both draw on.",
+		  "about.claude-motion": "A short motion piece that plays in place and exports as video.",
 		  "install.title": "Install the {type} plugin?",
 		  "install.body": "Install adds the {plugin} plugin. Then this tile starts one.",
 		  "install.manual": "Find {plugin} on the Plugins page and install it. Then this tile starts one.",
@@ -955,9 +1071,11 @@ window.__ModuleLoader__.load({
 		  "install.failed": "{type} did not install",
 		  "install.retry": "Try again",
 		  "install.start": "Start",
+		  "install.replaces": "It is the new name of {old}, which it then removes.",
+		  "install.kept": "{old} is still installed: remove it on the Plugins page.",
 		  "dialog.close": "Close"
 		};
-		var SKILLS = ["claude-docs", "claude-slides", "claude-design", "claude-dashboard", "claude-design-system", "claude-motion", "claude-whiteboard"];
+		var SKILLS = ["claude-docs", "claude-slides", "claude-sheets", "claude-design", "claude-design-system", "claude-data", "claude-whiteboard", "claude-motion"];
 		var isSkill = (s) => SKILLS.includes(s);
 		var creatable = (on) => SKILLS.filter((s) => on.includes(s));
 		var promptFor = (skill, t) => `/${skill} ${t(`prompt.${skill}`)}`;
@@ -1008,21 +1126,36 @@ window.__ModuleLoader__.load({
 		.bda-search button{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;margin-right:-4px;padding:0;border:0;border-radius:6px;background:none;color:inherit;cursor:pointer}
 		.bda-search button:hover{background:var(--dsw-alias-interactive-bg-hover)}
 		.bda-section-title{margin:0 0 12px;font-size:13px;font-weight:400;line-height:20px;color:var(--dsw-alias-label-tertiary)}
-		.bda-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:14px;margin:0 0 36px;padding:0;list-style:none}
+		.bda-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:14px 10px;margin:0 0 36px;padding:0;list-style:none}
 		.bda-tile{display:flex;flex-direction:column;gap:8px;width:100%;padding:0;border:0;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}
-		.bda-tile-art{position:relative;display:flex;align-items:center;justify-content:center;aspect-ratio:7/5;border-radius:14px;overflow:hidden;background:color-mix(in srgb,var(--bda-tint) 24%,var(--dsw-alias-bg-base));color:color-mix(in srgb,var(--bda-tint) 78%,var(--dsw-alias-label-primary));transition:background-color .15s}
-		.bda-tile:hover .bda-tile-art{background:color-mix(in srgb,var(--bda-tint) 34%,var(--dsw-alias-bg-base))}
+		.bda-tile-art{position:relative;display:flex;align-items:center;justify-content:center;aspect-ratio:10/7;border-radius:14px;overflow:hidden;background:var(--bda-wash);color:var(--bda-ink);transition:transform .2s cubic-bezier(.2,.7,.3,1),background-color .15s}
+		.bda-tile:hover .bda-tile-art,.bda-tile[data-peek=true] .bda-tile-art{transform:scale(1.03)}
 		.bda-tile:focus-visible{outline:none}
 		.bda-tile:focus-visible .bda-tile-art{outline:var(--dsw-focus-ring-width,2px) solid var(--dsw-focus-ring-color,var(--dsw-alias-state-business-primary));outline-offset:2px}
-		.bda-tile-squiggle{position:absolute;inset:0;width:100%;height:100%;opacity:.28}
-		.bda-tile-label{padding-left:2px;font-size:14px;line-height:20px}
-		.bda-tile[data-missing=true] .bda-tile-art{background:color-mix(in srgb,var(--bda-tint) 8%,var(--dsw-alias-bg-base));color:color-mix(in srgb,var(--bda-tint) 40%,var(--dsw-alias-label-caption));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--bda-tint) 22%,var(--dsw-alias-border-l2))}
-		.bda-tile[data-missing=true]:hover .bda-tile-art{background:color-mix(in srgb,var(--bda-tint) 16%,var(--dsw-alias-bg-base))}
-		.bda-tile[data-missing=true] .bda-tile-squiggle{opacity:.14}
+		.bda-tile-art>svg{position:relative}
+		.bda-tile-art>.bda-tile-doodle{position:absolute;inset:0;width:100%;height:100%;opacity:.14;pointer-events:none}
+		.bda-tile-beta{position:absolute;top:6px;left:6px;padding:0 6px;border-radius:999px;background:#fff;box-shadow:0 0 0 .5px var(--dsw-alias-border-l4,rgba(0,0,0,.16));color:var(--dsw-alias-label-secondary);font-size:11px;line-height:16px}
+		.bda-tile-label{display:flex;flex-direction:column;padding-left:2px;font-size:14px;line-height:20px}
+		.bda-tile-state{display:inline-flex;align-items:center;gap:5px;color:var(--dsw-alias-label-tertiary);font-size:12px;line-height:16px}
+		.bda-tile-state[data-state=failed]{color:var(--dsw-alias-state-error-primary)}
+		.bda-tile-state .bda-spinner{width:9px;height:9px;border-width:1.2px}
+		.bda-tile[data-missing=true] .bda-tile-art{background:color-mix(in srgb,var(--bda-wash) 45%,var(--dsw-alias-bg-base));color:color-mix(in srgb,var(--bda-ink) 55%,var(--dsw-alias-bg-base));box-shadow:inset 0 0 0 .5px color-mix(in srgb,var(--bda-ink) 22%,transparent)}
+		.bda-tile[data-missing=true]:hover .bda-tile-art,.bda-tile[data-missing=true][data-peek=true] .bda-tile-art{background:color-mix(in srgb,var(--bda-wash) 65%,var(--dsw-alias-bg-base))}
+		.bda-tile[data-missing=true] .bda-tile-doodle{opacity:.08}
 		.bda-tile[data-missing=true] .bda-tile-label{color:var(--dsw-alias-label-secondary)}
-		.bda-tile-badge{position:absolute;top:8px;right:8px;display:inline-flex;align-items:center;gap:5px;max-width:calc(100% - 16px);padding:0 7px;border-radius:9px;background:var(--dsw-alias-bg-base);box-shadow:0 0 0 .5px var(--dsw-alias-border-l2);color:var(--dsw-alias-label-secondary);font-size:11px;line-height:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-		.bda-tile-badge[data-state=failed]{color:var(--dsw-alias-state-error-primary)}
-		.bda-tile-badge .bda-spinner{width:9px;height:9px;border-width:1.2px}
+		body[data-ds-dark-theme] .bda-tile-art{background:color-mix(in srgb,var(--bda-ink) 36%,var(--dsw-alias-bg-base));color:var(--bda-wash)}
+		body[data-ds-dark-theme] .bda-tile[data-missing=true] .bda-tile-art{background:color-mix(in srgb,var(--bda-ink) 16%,var(--dsw-alias-bg-base));color:color-mix(in srgb,var(--bda-wash) 55%,var(--dsw-alias-bg-base));box-shadow:inset 0 0 0 .5px color-mix(in srgb,var(--bda-wash) 18%,transparent)}
+		body[data-ds-dark-theme] .bda-tile[data-missing=true]:hover .bda-tile-art,body[data-ds-dark-theme] .bda-tile[data-missing=true][data-peek=true] .bda-tile-art{background:color-mix(in srgb,var(--bda-ink) 24%,var(--dsw-alias-bg-base))}
+		body[data-ds-dark-theme] .bda-tile-art>.bda-tile-doodle{opacity:.12}
+		body[data-ds-dark-theme] .bda-tile-beta{background:var(--dsw-alias-bg-base)}
+		.bda-peek{position:fixed;z-index:900;width:288px;max-width:calc(100vw - 16px);box-sizing:border-box;padding:16px;border:.5px solid var(--dsw-alias-border-l4,rgba(0,0,0,.16));border-radius:16px;background:var(--dsw-alias-bg-base);box-shadow:0 12px 32px -10px rgba(0,0,0,.22);color:var(--dsw-alias-label-primary);animation:bda-peek-in .14s ease-out}
+		.bda-peek-title{font-size:17px;line-height:24px}
+		.bda-peek-by{margin-top:2px;font-size:14px;line-height:20px;color:var(--dsw-alias-label-secondary)}
+		.bda-peek-about{margin:6px 0 0;font-size:14px;line-height:20px;color:var(--dsw-alias-label-secondary)}
+		.bda-peek-act{margin-top:14px;height:32px;padding:0 10px;border:0;border-radius:8px;background:color-mix(in srgb,var(--dsw-alias-label-primary) 6%,var(--dsw-alias-bg-base));color:var(--dsw-alias-label-primary);font:inherit;font-size:14px;cursor:pointer}
+		.bda-peek-act:hover{background:color-mix(in srgb,var(--dsw-alias-label-primary) 10%,var(--dsw-alias-bg-base))}
+		.bda-peek-act:focus-visible{outline:var(--dsw-focus-ring-width,2px) solid var(--dsw-focus-ring-color,var(--dsw-alias-state-business-primary));outline-offset:2px}
+		@keyframes bda-peek-in{from{opacity:0;transform:translateY(-4px)}}
 		.bda-dialog-head{display:flex;align-items:center;gap:12px;margin-bottom:12px}
 		.bda-dialog-head h2{margin:0}
 		.bda-dialog .bda-glyph{width:40px;height:40px}
@@ -1055,6 +1188,10 @@ window.__ModuleLoader__.load({
 		.bda-flow{display:block;width:100%;height:auto;margin-top:4px}
 		.bda-flow rect{fill:color-mix(in srgb,var(--bda-tint) 18%,var(--dsw-alias-bg-base));stroke:var(--dsw-alias-border-l2);stroke-width:.5}
 		.bda-flow path{fill:none;stroke:var(--bda-tint);stroke-width:1.2;stroke-linecap:round;stroke-linejoin:round}
+		.bda-cells{display:block;width:100%;height:auto;margin-top:4px}
+		.bda-cells path{fill:none;stroke:var(--dsw-alias-border-l2);stroke-width:.75}
+		.bda-cells-head{fill:color-mix(in srgb,var(--bda-tint) 18%,var(--dsw-alias-bg-base))}
+		.bda-cells-pick{fill:none;stroke:var(--bda-tint);stroke-width:1.5}
 		.bda-swatches{display:flex;gap:4px}
 		.bda-swatch{width:16px;height:16px;border-radius:50%;background:var(--bda-tint)}
 		.bda-swatch:nth-child(2){opacity:.7}.bda-swatch:nth-child(3){opacity:.45}.bda-swatch:nth-child(4){opacity:.25}
@@ -1072,7 +1209,10 @@ window.__ModuleLoader__.load({
 		.bda-spinner{width:14px;height:14px;border-radius:50%;border:1.5px solid currentColor;border-right-color:transparent;animation:bda-spin .8s linear infinite}
 		@keyframes bda-spin{to{transform:rotate(360deg)}}
 		.bda-info{display:flex;align-items:center;gap:12px;min-width:0;padding:12px 14px}
-		.bda-glyph{flex:none;display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:9px;background:color-mix(in srgb,var(--bda-tint) 16%,var(--dsw-alias-bg-base));color:color-mix(in srgb,var(--bda-tint) 78%,var(--dsw-alias-label-primary))}
+		.bda-glyph{flex:none;display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:9px;background:var(--bda-wash);color:var(--bda-ink)}
+		body[data-ds-dark-theme] .bda-glyph{background:color-mix(in srgb,var(--bda-ink) 36%,var(--dsw-alias-bg-base));color:var(--bda-wash)}
+		.bda-menu-glyph{display:flex;color:var(--bda-ink)}
+		body[data-ds-dark-theme] .bda-menu-glyph{color:var(--bda-wash)}
 		.bda-text{display:flex;flex-direction:column;min-width:0;flex:1}
 		.bda-name{font-weight:500;line-height:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 		.bda-meta{color:var(--dsw-alias-label-tertiary);font-size:12px;line-height:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -1143,18 +1283,24 @@ window.__ModuleLoader__.load({
 		.bda-skeleton .bda-card{cursor:default}
 		.bda-skeleton .bda-preview{background:var(--dsw-alias-bg-skeleton,var(--dsw-alias-interactive-bg-hover))}
 		.bda-skeleton .bda-line{width:60%;height:10px;margin:18px 14px}
-		@media (prefers-reduced-motion:reduce){.bda-sheet,.bda-paper,.bda-slide,.bda-film,.bda-act,.bda-tile-art,.bda-card{transition:none}.bda-spinner{animation-duration:2s}}
+		@media (prefers-reduced-motion:reduce){.bda-sheet,.bda-paper,.bda-slide,.bda-film,.bda-act,.bda-tile-art,.bda-card{transition:none}.bda-tile:hover .bda-tile-art,.bda-tile[data-peek=true] .bda-tile-art{transform:none}.bda-peek{animation:none}.bda-spinner{animation-duration:2s}}
 		`;
-		var TINTS = {
-		  "claude-slides": "#e8703a",
-		  "claude-design": "#7a5cf0",
-		  "claude-design-system": "#c79a1b",
-		  "claude-dashboard": "#e5484d",
-		  "claude-docs": "#3f8ef0",
-		  "claude-motion": "#1fa971",
-		  "claude-whiteboard": "#d6409f"
+		var COLORS = {
+		  "claude-docs": { wash: "#cce3fd", ink: "#1757ac", tint: "#3f8ef0" },
+		  "claude-slides": { wash: "#f7d9ca", ink: "#903710", tint: "#e8703a" },
+		  "claude-sheets": { wash: "#caecc8", ink: "#016c0f", tint: "#3d9e3a" },
+		  "claude-design": { wash: "#e4deff", ink: "#5437b8", tint: "#7a5cf0" },
+		  "claude-design-system": { wash: "#fbe6bd", ink: "#865400", tint: "#c79a1b" },
+		  "claude-data": { wash: "#fbd4d4", ink: "#a42528", tint: "#e5484d" },
+		  "claude-whiteboard": { wash: "#fbd6e5", ink: "#902552", tint: "#d6409f" },
+		  "claude-motion": { wash: "#bfeee5", ink: "#006458", tint: "#14a38b" }
 		};
-		var tintOf = (skill) => isSkill(skill) ? TINTS[skill] : "#8a8a8a";
+		var NO_COLORS = { wash: "#ececec", ink: "#555555", tint: "#8a8a8a" };
+		var typeStyle = (skill) => {
+		  const c = isSkill(skill) ? COLORS[skill] : NO_COLORS;
+		  return { "--bda-tint": c.tint, "--bda-wash": c.wash, "--bda-ink": c.ink };
+		};
+		var BETA = ["claude-sheets", "claude-data", "claude-whiteboard", "claude-motion"];
 		var svg = (size) => ({ display: "block", width: size, height: size, flex: "none" });
 		function ArtifactsIcon({ size = 16 }) {
 		  return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("svg", { viewBox: "0 0 20 20", fill: "none", "aria-hidden": "true", style: svg(size), children: [
@@ -1166,51 +1312,103 @@ window.__ModuleLoader__.load({
 		  return /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(UpdateMark, { updates, wide: size <= 16, children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(ArtifactsIcon, { size }) });
 		}
 		function TypeIcon({ skill, size = 18 }) {
-		  const p = { stroke: "currentColor", strokeWidth: 1.5, strokeLinecap: "round", strokeLinejoin: "round" };
+		  const p = { stroke: "currentColor", strokeWidth: 1.6, strokeLinecap: "round", strokeLinejoin: "round" };
 		  const body = (() => {
 		    switch (skill) {
+		      case "claude-docs":
+		        return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(import_jsx_runtime2.Fragment, { children: [
+		          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("path", { d: "M6 2.25h5.6c.4 0 .78.16 1.06.44l3.65 3.65c.28.28.44.66.44 1.06v7.85A2.75 2.75 0 0 1 14 18H6a2.75 2.75 0 0 1-2.75-2.75V5A2.75 2.75 0 0 1 6 2.25Z", ...p }),
+		          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("path", { d: "M12 2.4v2.85a2 2 0 0 0 2 2h2.6", ...p })
+		        ] });
 		      case "claude-slides":
-		        return /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(import_jsx_runtime2.Fragment, { children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("path", { d: "M2.75 3.5h14.5M4 3.5v8.25a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V3.5M7.25 16.75 10 12.75l2.75 4", ...p }) });
+		        return /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(import_jsx_runtime2.Fragment, { children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("path", { d: "M1.25 2.75h17.5M2.75 2.75v8.75A2.25 2.25 0 0 0 5 13.75h10a2.25 2.25 0 0 0 2.25-2.25V2.75M10 13.75l-3 4M10 13.75l3 4", ...p }) });
+		      case "claude-sheets":
+		        return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(import_jsx_runtime2.Fragment, { children: [
+		          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("rect", { x: "2.25", y: "2.25", width: "15.5", height: "15.5", rx: "3", ...p }),
+		          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("path", { d: "M2.25 7.5h15.5M2.25 12.5h15.5M7 2.25v15.5", ...p })
+		        ] });
 		      case "claude-design":
 		        return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(import_jsx_runtime2.Fragment, { children: [
-		          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("path", { d: "M10 2.75a7.25 7.25 0 1 0 0 14.5c1.1 0 1.75-.8 1.75-1.7 0-.5-.2-.9-.45-1.25-.25-.35-.45-.7-.45-1.15 0-.95.75-1.65 1.7-1.65h1.6a3.1 3.1 0 0 0 3.1-3.1c0-3.1-3.2-5.65-7.25-5.65Z", ...p }),
-		          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("circle", { cx: "6.4", cy: "9.4", r: ".9", fill: "currentColor" }),
-		          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("circle", { cx: "8.8", cy: "6.3", r: ".9", fill: "currentColor" }),
-		          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("circle", { cx: "12.5", cy: "6.8", r: ".9", fill: "currentColor" })
+		          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("path", { d: "M10 2.25c-4.75 0-8.5 3.3-8.5 7.6 0 4.5 3.55 8.15 8.2 8.15 3.1 0 5.55-1.25 5.55-3.4 0-1.25-1.15-1.75-1.15-2.8 0-1.2 1.05-1.6 2.25-2.2 1.3-.65 2.15-1.5 2.15-3C18.5 3.95 14.6 2.25 10 2.25Z", ...p }),
+		          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("circle", { cx: "8", cy: "6.6", r: "1.35", fill: "currentColor" }),
+		          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("circle", { cx: "12.4", cy: "6.9", r: "1.35", fill: "currentColor" }),
+		          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("circle", { cx: "5.2", cy: "10.3", r: "1.35", fill: "currentColor" })
 		        ] });
 		      case "claude-design-system":
 		        return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(import_jsx_runtime2.Fragment, { children: [
-		          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("circle", { cx: "6.5", cy: "6.5", r: "3.25", ...p }),
-		          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("circle", { cx: "13.5", cy: "6.5", r: "3.25", ...p }),
-		          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("circle", { cx: "10", cy: "13", r: "3.25", ...p })
+		          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("rect", { x: "2.25", y: "2.25", width: "6.75", height: "6.75", rx: "1.75", ...p }),
+		          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("circle", { cx: "14.4", cy: "5.6", r: "3.4", ...p }),
+		          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("circle", { cx: "5.6", cy: "14.4", r: "3.4", ...p }),
+		          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("rect", { x: "11", y: "11", width: "6.75", height: "6.75", rx: "1.75", ...p })
 		        ] });
-		      case "claude-dashboard":
+		      case "claude-data":
 		        return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(import_jsx_runtime2.Fragment, { children: [
-		          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("rect", { x: "2.75", y: "10", width: "4.5", height: "7.25", rx: "1", ...p }),
-		          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("rect", { x: "7.75", y: "2.75", width: "4.5", height: "14.5", rx: "1", ...p }),
-		          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("rect", { x: "12.75", y: "7", width: "4.5", height: "10.25", rx: "1", ...p })
-		        ] });
-		      case "claude-docs":
-		        return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(import_jsx_runtime2.Fragment, { children: [
-		          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("path", { d: "M5.5 2.75h6l4 4v9.5a1 1 0 0 1-1 1h-9a1 1 0 0 1-1-1V3.75a1 1 0 0 1 1-1Z", ...p }),
-		          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("path", { d: "M11.5 2.75v4h4", ...p })
-		        ] });
-		      case "claude-motion":
-		        return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(import_jsx_runtime2.Fragment, { children: [
-		          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("rect", { x: "2.75", y: "4", width: "14.5", height: "12", rx: "2", ...p }),
-		          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("path", { d: "m8.5 7.75 4 2.25-4 2.25v-4.5Z", ...p })
+		          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("path", { d: "M1.75 16.25V11.5c0-.97.78-1.75 1.75-1.75H7V4c0-.97.78-1.75 1.75-1.75h2c.97 0 1.75.78 1.75 1.75v2.25h3.75c.97 0 1.75.78 1.75 1.75v8.25c0 .97-.78 1.75-1.75 1.75H3.5c-.97 0-1.75-.78-1.75-1.75Z", ...p }),
+		          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("path", { d: "M7 9.75V18M12.5 6.25V18", ...p })
 		        ] });
 		      case "claude-whiteboard":
 		        return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(import_jsx_runtime2.Fragment, { children: [
-		          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("rect", { x: "2.75", y: "3.25", width: "6", height: "4.5", rx: "1", ...p }),
-		          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("rect", { x: "11.25", y: "11.75", width: "6", height: "4.5", rx: "1", ...p }),
-		          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("path", { d: "M8.75 5.5h3.5a1.5 1.5 0 0 1 1.5 1.5v4.75M3 15.25c1.25-1.5 2.25.75 3.5-.75", ...p })
+		          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("path", { d: "M11.52 8.25A5 5 0 1 0 8.25 11.52", ...p }),
+		          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("rect", { x: "8.25", y: "8.25", width: "10", height: "10", rx: "2.25", ...p })
+		        ] });
+		      case "claude-motion":
+		        return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(import_jsx_runtime2.Fragment, { children: [
+		          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("path", { d: "M3.75 6.6h2M1.5 10H5M3.75 13.4h2", ...p }),
+		          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("circle", { cx: "13.75", cy: "10", r: "4.75", ...p })
 		        ] });
 		      default:
 		        return /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("rect", { x: "3", y: "3", width: "14", height: "14", rx: "2", ...p });
 		    }
 		  })();
 		  return /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("svg", { viewBox: "0 0 20 20", fill: "none", "aria-hidden": "true", style: svg(size), children: body });
+		}
+		function Doodle({ skill }) {
+		  const id = `bda-chalk-${skill}`;
+		  const line = { fill: "none", stroke: "currentColor", strokeWidth: 7, strokeLinecap: "round", strokeLinejoin: "round" };
+		  const shapes = (() => {
+		    switch (skill) {
+		      case "claude-docs":
+		        return /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("path", { d: "M12 28c5 14 10 27 15 38 7-10 14-21 20-31 4 9 8 19 11 28M84 74c9-10 18-20 27-30 4 11 7 23 11 34 6-8 12-15 20-23", ...line });
+		      case "claude-slides":
+		        return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(import_jsx_runtime2.Fragment, { children: [
+		          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("rect", { x: "-14", y: "45", width: "107", height: "72", rx: "11", ...line }),
+		          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("rect", { x: "4", y: "66", width: "116", height: "52", rx: "11", ...line }),
+		          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("path", { d: "M17 86h55", ...line })
+		        ] });
+		      case "claude-sheets":
+		        return /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("path", { d: "M9 -6v94M51 -6v94M90 -6v94M-6 23h122M-6 57h122", ...line });
+		      case "claude-design":
+		        return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(import_jsx_runtime2.Fragment, { children: [
+		          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("rect", { x: "15", y: "18", width: "106", height: "64", ...line }),
+		          [[15, 18], [121, 18], [15, 82], [121, 82]].map(([x, y]) => /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("rect", { x: x - 7, y: y - 7, width: "14", height: "14", rx: "2", ...line }, `${x},${y}`))
+		        ] });
+		      case "claude-design-system":
+		        return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(import_jsx_runtime2.Fragment, { children: [
+		          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("circle", { cx: "20", cy: "22", r: "13", ...line }),
+		          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("rect", { x: "98", y: "6", width: "32", height: "26", rx: "6", ...line }),
+		          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("rect", { x: "8", y: "66", width: "34", height: "28", rx: "6", ...line }),
+		          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("circle", { cx: "118", cy: "76", r: "15", ...line })
+		        ] });
+		      case "claude-data":
+		        return /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("path", { d: "M38 94v20M70 81v33M101 67v47M132 48v66", ...line, strokeWidth: 11 });
+		      case "claude-whiteboard":
+		        return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(import_jsx_runtime2.Fragment, { children: [
+		          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("rect", { x: "-12", y: "60", width: "46", height: "31", rx: "7", ...line }),
+		          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("path", { d: "M36 81c22-3 42-12 62-36 8-10 16-19 25-25M104 25l20-6 2 26", ...line })
+		        ] });
+		      case "claude-motion":
+		        return /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("path", { d: "M19 44c13-4 26-5 38-4 14 1 23 13 34 15 16 3 33-5 49-4M19 68c13 1 26 3 38 5 16 3 26 13 42 14 15 1 28-6 41-7", ...line });
+		    }
+		  })();
+		  return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("svg", { className: "bda-tile-doodle", viewBox: "0 0 140 100", preserveAspectRatio: "xMidYMid slice", "aria-hidden": "true", children: [
+		    /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("filter", { id, x: "-10%", y: "-10%", width: "120%", height: "120%", children: [
+		      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("feTurbulence", { type: "fractalNoise", baseFrequency: "0.9", numOctaves: 2, seed: 3, result: "noise" }),
+		      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("feDisplacementMap", { in: "SourceGraphic", in2: "noise", scale: 3, xChannelSelector: "R", yChannelSelector: "G", result: "rough" }),
+		      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("feColorMatrix", { in: "noise", type: "matrix", values: "0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 2.4 -0.7", result: "grain" }),
+		      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("feComposite", { in: "rough", in2: "grain", operator: "in" })
+		    ] }),
+		    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("g", { filter: `url(#${id})`, children: shapes })
+		  ] });
 		}
 		function Icon({ d, size = 16, fill }) {
 		  return /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("svg", { viewBox: "0 0 16 16", fill: fill ? "currentColor" : "none", stroke: fill ? void 0 : "currentColor", strokeWidth: "1.3", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", style: svg(size), children: typeof d === "string" ? /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("path", { d }) : d });
@@ -1278,6 +1476,15 @@ window.__ModuleLoader__.load({
 		          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("path", { d: "M31 10.5h14M75 10.5h12a3 3 0 0 1 3 3v5.5" })
 		        ] })
 		      ] });
+		    case "claude-sheets":
+		      return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "bda-paper", children: [
+		        name,
+		        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("svg", { className: "bda-cells", viewBox: "0 0 120 48", "aria-hidden": "true", children: [
+		          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("rect", { className: "bda-cells-head", x: ".5", y: ".5", width: "119", height: "9.5" }),
+		          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("rect", { className: "bda-cells-pick", x: "40", y: "19.5", width: "40", height: "9.5" }),
+		          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("path", { d: "M.5 .5h119v47H.5ZM.5 10h119M.5 19.5h119M.5 29h119M.5 38.5h119M40 .5v47M80 .5v47" })
+		        ] })
+		      ] });
 		    case "claude-design":
 		      return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "bda-paper", children: [
 		        name,
@@ -1297,7 +1504,7 @@ window.__ModuleLoader__.load({
 		        ] }),
 		        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { className: "bda-specimen", children: "Aa" })
 		      ] });
-		    case "claude-dashboard":
+		    case "claude-data":
 		      return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "bda-paper", children: [
 		        name,
 		        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "bda-kpis", children: [
@@ -1549,8 +1756,8 @@ window.__ModuleLoader__.load({
 		      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "bda-menu-label", children: t("create.session") })
 		    ] }),
 		    skills.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { className: "bda-menu-rule", role: "separator" }),
-		    skills.map((skill) => /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("button", { type: "button", className: "bda-menu-item", role: "menuitem", "data-skill": skill, onClick: () => create(skill), style: { "--bda-tint": tintOf(skill) }, children: [
-		      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { style: { color: "color-mix(in srgb,var(--bda-tint) 78%,var(--dsw-alias-label-primary))" }, children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(TypeIcon, { skill, size: 16 }) }),
+		    skills.map((skill) => /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("button", { type: "button", className: "bda-menu-item", role: "menuitem", "data-skill": skill, onClick: () => create(skill), style: typeStyle(skill), children: [
+		      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "bda-menu-glyph", children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(TypeIcon, { skill, size: 16 }) }),
 		      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "bda-menu-label", children: t(`type.${skill}`) })
 		    ] }, skill))
 		  ] });
@@ -1613,7 +1820,8 @@ window.__ModuleLoader__.load({
 		    ] })
 		  ] });
 		}
-		function InstallDialog({ skill, plugin, run: run2, updating, canInstall, canOpenPlugins, ready, t, onClose, onInstall, onOpenPlugins, onStart }) {
+		var withReplaced = (name) => name === void 0 ? {} : { replaces: name };
+		function InstallDialog({ skill, plugin, run: run2, updating, canInstall, canOpenPlugins, ready, replaces, t, onClose, onInstall, onOpenPlugins, onStart }) {
 		  const primary = (0, import_react2.useRef)(null);
 		  const phase = run2?.phase ?? "ask";
 		  (0, import_react2.useEffect)(() => primary.current?.focus(), [phase]);
@@ -1621,7 +1829,8 @@ window.__ModuleLoader__.load({
 		  let title = t("install.title", { type });
 		  let body = /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(import_jsx_runtime2.Fragment, { children: [
 		    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("p", { children: t(`about.${skill}`) }),
-		    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("p", { children: t(canInstall ? updating ? "install.busy" : "install.body" : "install.manual", { plugin }) })
+		    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("p", { children: t(canInstall ? updating ? "install.busy" : "install.body" : "install.manual", { plugin }) }),
+		    canInstall && replaces !== void 0 && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("p", { children: t("install.replaces", { old: replaces }) })
 		  ] });
 		  let actions = /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(import_jsx_runtime2.Fragment, { children: [
 		    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("button", { type: "button", className: "bda-btn", onClick: onClose, children: t("dialog.cancel") }),
@@ -1636,7 +1845,10 @@ window.__ModuleLoader__.load({
 		    actions = /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("button", { ref: primary, type: "button", className: "bda-btn", onClick: onClose, children: t("dialog.close") });
 		  } else if (phase === "done") {
 		    title = t("install.done", { type });
-		    body = /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("p", { children: t(run2?.restart ? "install.restart" : "install.doneBody") });
+		    body = /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(import_jsx_runtime2.Fragment, { children: [
+		      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("p", { children: t(run2?.restart ? "install.restart" : "install.doneBody") }),
+		      run2?.kept !== void 0 && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("p", { children: t("install.kept", { old: run2.kept }) })
+		    ] });
 		    actions = /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(import_jsx_runtime2.Fragment, { children: [
 		      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("button", { ref: ready ? void 0 : primary, type: "button", className: "bda-btn", onClick: onClose, children: t("dialog.close") }),
 		      ready && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("button", { ref: primary, type: "button", className: "bda-btn", "data-primary": "true", onClick: onStart, children: t("install.start") })
@@ -1650,7 +1862,7 @@ window.__ModuleLoader__.load({
 		      canInstall && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("button", { ref: primary, type: "button", className: "bda-btn", "data-primary": "true", disabled: updating, onClick: onInstall, children: t("install.retry") })
 		    ] });
 		  }
-		  return /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Dialog, { label: title, onClose, children: /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { "data-testid": "baoyu-design-install", "data-skill": skill, "data-phase": phase, style: { "--bda-tint": tintOf(skill) }, children: [
+		  return /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Dialog, { label: title, onClose, children: /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { "data-testid": "baoyu-design-install", "data-skill": skill, "data-phase": phase, style: typeStyle(skill), children: [
 		    /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "bda-dialog-head", children: [
 		      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "bda-glyph", children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(TypeIcon, { skill, size: 22 }) }),
 		      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("h2", { children: title })
@@ -1681,7 +1893,7 @@ window.__ModuleLoader__.load({
 		}
 		function Card({ view, state, conversation, now, t, thumbnailUrl, onOpen, onPin, menuOpen, onMenu }) {
 		  const opening = state.opening === view.root;
-		  return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("li", { className: "bda-item", "data-menu": menuOpen, style: { "--bda-tint": tintOf(view.skill) }, children: [
+		  return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("li", { className: "bda-item", "data-menu": menuOpen, style: typeStyle(view.skill), children: [
 		    /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("button", { type: "button", className: "bda-card", disabled: state.opening !== null, "aria-busy": opening, title: hint(view, conversation), onClick: () => onOpen(view), "data-skill": view.skill, children: [
 		      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("span", { className: "bda-preview-wrap", style: { display: "block", position: "relative", width: "100%" }, children: [
 		        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Preview, { view, thumbnailUrl }),
@@ -1706,7 +1918,7 @@ window.__ModuleLoader__.load({
 		}
 		function Row({ view, state, conversation, now, t, onOpen, onPin, menuOpen, onMenu }) {
 		  const opening = state.opening === view.root;
-		  return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("li", { className: "bda-item", "data-menu": menuOpen, style: { "--bda-tint": tintOf(view.skill) }, children: [
+		  return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("li", { className: "bda-item", "data-menu": menuOpen, style: typeStyle(view.skill), children: [
 		    /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("button", { type: "button", className: "bda-row", disabled: state.opening !== null, "aria-busy": opening, title: hint(view, conversation), onClick: () => onOpen(view), "data-skill": view.skill, children: [
 		      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "bda-glyph", children: opening ? /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "bda-spinner" }) : /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(TypeIcon, { skill: view.skill }) }),
 		      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "bda-name", children: view.title }),
@@ -1732,12 +1944,71 @@ window.__ModuleLoader__.load({
 		  } catch {
 		  }
 		}
+		var PEEK_SHOW_MS = 350;
+		var PEEK_HIDE_MS = 160;
+		var PEEK_ABOUT_ID = "bda-peek-about";
+		function TilePeek({ skill, anchor, status, t, onAct, onEnter, onLeave, onClose }) {
+		  const ref = (0, import_react2.useRef)(null);
+		  const [place, setPlace] = (0, import_react2.useState)({ visibility: "hidden" });
+		  (0, import_react2.useLayoutEffect)(() => {
+		    const box = anchor.getBoundingClientRect();
+		    const width = ref.current?.offsetWidth ?? 0;
+		    const height = ref.current?.offsetHeight ?? 0;
+		    const below = box.bottom + 8;
+		    setPlace({
+		      left: Math.max(8, Math.min(box.left, window.innerWidth - width - 8)),
+		      top: below + height <= window.innerHeight - 8 ? below : Math.max(8, box.top - 8 - height)
+		    });
+		  }, [anchor]);
+		  (0, import_react2.useEffect)(() => {
+		    const gone = () => onClose();
+		    window.addEventListener("scroll", gone, true);
+		    window.addEventListener("resize", gone);
+		    return () => {
+		      window.removeEventListener("scroll", gone, true);
+		      window.removeEventListener("resize", gone);
+		    };
+		  }, [onClose]);
+		  const act = status === null ? "peek.start" : status.state === "missing" || status.state === "failed" ? "peek.install" : "peek.details";
+		  return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(
+		    "div",
+		    {
+		      ref,
+		      className: "bda-peek",
+		      role: "group",
+		      "aria-label": t(`type.${skill}`),
+		      "data-testid": "baoyu-design-peek",
+		      "data-skill": skill,
+		      style: { ...typeStyle(skill), ...place },
+		      onPointerEnter: onEnter,
+		      onPointerLeave: onLeave,
+		      onKeyDown: (event) => {
+		        if (event.key === "Escape") {
+		          onClose();
+		          anchor.focus();
+		        }
+		      },
+		      children: [
+		        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { className: "bda-peek-title", children: t(`type.${skill}`) }),
+		        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "bda-peek-by", children: [
+		          t("peek.by"),
+		          status !== null && ` · ${t(status.key)}`
+		        ] }),
+		        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("p", { className: "bda-peek-about", id: PEEK_ABOUT_ID, children: t(`about.${skill}`) }),
+		        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("button", { type: "button", className: "bda-peek-act", onClick: onAct, children: t(act) })
+		      ]
+		    }
+		  );
+		}
 		function ArtifactsPage(props) {
 		  const { t, updates, artifactsStore, sessionsStore, reloadArtifacts, openArtifact, create, canCreate, createOptions, installOptions, pluginOf, install: install2, canInstall, openPlugins, canOpenPlugins, pin, rename, copyLink, remove, undo, thumbnailUrl, watchThumbnails, dismissToast } = props;
 		  const state = (0, import_react2.useSyncExternalStore)(artifactsStore.subscribe, artifactsStore.getSnapshot);
 		  const updateState = useUpdateState();
 		  const run2 = updateState.install ?? null;
 		  const [installing, setInstalling] = (0, import_react2.useState)(null);
+		  const [peek, setPeek] = (0, import_react2.useState)(null);
+		  const peekTimer = (0, import_react2.useRef)(void 0);
+		  const overPeek = (0, import_react2.useRef)(false);
 		  const sessions = (0, import_react2.useSyncExternalStore)(sessionsStore.subscribe, sessionsStore.getSnapshot);
 		  const [query, setQuery] = (0, import_react2.useState)("");
 		  const [searching, setSearching] = (0, import_react2.useState)(false);
@@ -1773,6 +2044,36 @@ window.__ModuleLoader__.load({
 		    [usable, offered, ranFor, canCreate]
 		  );
 		  const ranReady = ranFor !== void 0 && state.skills.includes(ranFor);
+		  const statusOf = (skill) => {
+		    if (usable.includes(skill)) return null;
+		    const own = run2 !== null && skill === ranFor ? run2 : null;
+		    if (own?.phase === "running") return { key: "tile.installing", state: "running" };
+		    if (own?.phase === "failed") return { key: "tile.failed", state: "failed" };
+		    if (own?.phase === "done") return { key: own.restart ? "tile.restart" : "tile.installed", state: "done" };
+		    return { key: "tile.missing", state: "missing" };
+		  };
+		  const closePeek = (0, import_react2.useMemo)(
+		    () => () => {
+		      clearTimeout(peekTimer.current);
+		      overPeek.current = false;
+		      setPeek(null);
+		    },
+		    []
+		  );
+		  (0, import_react2.useEffect)(() => () => clearTimeout(peekTimer.current), []);
+		  const showPeek = (skill, anchor, now2 = false) => {
+		    clearTimeout(peekTimer.current);
+		    peekTimer.current = setTimeout(() => setPeek({ skill, anchor }), now2 || peek !== null ? 0 : PEEK_SHOW_MS);
+		  };
+		  const hidePeek = () => {
+		    clearTimeout(peekTimer.current);
+		    peekTimer.current = setTimeout(() => setPeek(null), PEEK_HIDE_MS);
+		  };
+		  const tileAct = (skill) => {
+		    closePeek();
+		    if (usable.includes(skill)) create(skill);
+		    else setInstalling(skill);
+		  };
 		  (0, import_react2.useEffect)(() => {
 		    if (run2?.phase !== "done" || run2.restart || ranReady) return;
 		    reloadArtifacts();
@@ -1783,6 +2084,21 @@ window.__ModuleLoader__.load({
 		      clearTimeout(stop);
 		    };
 		  }, [run2, ranReady, reloadArtifacts]);
+		  const replacing = (0, import_react2.useMemo)(
+		    () => SKILLS.filter((s) => (updateState.updated ?? []).some((u) => u.replaces !== void 0 && u.name === pluginOf(s))),
+		    [updateState.updated, pluginOf]
+		  );
+		  const replacingReady = replacing.every((s) => state.skills.includes(s));
+		  (0, import_react2.useEffect)(() => {
+		    if (replacingReady) return;
+		    reloadArtifacts();
+		    const every = setInterval(reloadArtifacts, 1e3);
+		    const stop = setTimeout(() => clearInterval(every), 15e3);
+		    return () => {
+		      clearInterval(every);
+		      clearTimeout(stop);
+		    };
+		  }, [replacingReady, reloadArtifacts]);
 		  const shown = (0, import_react2.useMemo)(() => {
 		    const q = query.trim().toLowerCase();
 		    const kept = state.artifacts.filter((a) => {
@@ -1876,35 +2192,63 @@ window.__ModuleLoader__.load({
 		        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("h2", { className: "bda-section-title", children: t("create.heading") }),
 		        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("ul", { className: "bda-tiles", children: tiles.map((skill) => {
 		          const ready = usable.includes(skill);
-		          const own = run2 !== null && skill === ranFor ? run2 : null;
-		          const badge = ready ? null : own?.phase === "running" ? { key: "tile.installing", state: "running" } : own?.phase === "failed" ? { key: "tile.failed", state: "failed" } : own?.phase === "done" ? { key: own.restart ? "tile.restart" : "tile.installed", state: "done" } : { key: "tile.missing", state: "missing" };
-		          return /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(
+		          const status = statusOf(skill);
+		          const peeking = peek?.skill === skill;
+		          return /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("li", { onPointerEnter: (event) => event.pointerType !== "touch" && showPeek(skill, event.currentTarget.firstElementChild), onPointerLeave: hidePeek, children: /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(
 		            "button",
 		            {
 		              type: "button",
 		              className: "bda-tile",
 		              "data-skill": skill,
-		              ...ready ? {} : { "data-missing": "true", "aria-haspopup": "dialog", title: t("tile.hint", { type: t(`type.${skill}`) }) },
-		              style: { "--bda-tint": tintOf(skill) },
-		              onClick: () => ready ? create(skill) : setInstalling(skill),
+		              ...ready ? {} : { "data-missing": "true", "aria-haspopup": "dialog" },
+		              ...peeking ? { "data-peek": "true", "aria-describedby": PEEK_ABOUT_ID } : {},
+		              style: typeStyle(skill),
+		              onClick: () => tileAct(skill),
+		              onFocus: (event) => {
+		                if (event.currentTarget.matches(":focus-visible")) showPeek(skill, event.currentTarget, true);
+		              },
+		              onBlur: () => {
+		                if (!overPeek.current) hidePeek();
+		              },
+		              onKeyDown: (event) => {
+		                if (event.key === "Escape" && peek !== null) closePeek();
+		              },
 		              children: [
 		                /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("span", { className: "bda-tile-art", children: [
-		                  /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("svg", { className: "bda-tile-squiggle", viewBox: "0 0 140 100", preserveAspectRatio: "xMidYMid slice", fill: "none", stroke: "currentColor", strokeWidth: "1.1", strokeDasharray: "0 3.2", strokeLinecap: "round", "aria-hidden": "true", children: [
-		                    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("path", { d: "M4 84C20 16 42 98 62 42s38 58 74-28" }),
-		                    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("path", { d: "M6 88C24 22 44 104 66 46s36 56 72-26" }),
-		                    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("path", { d: "M2 80C18 12 40 92 58 38s40 58 76-28" })
-		                  ] }),
-		                  /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(TypeIcon, { skill, size: 40 }),
-		                  badge !== null && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("span", { className: "bda-tile-badge", "data-state": badge.state, children: [
-		                    badge.state === "running" && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "bda-spinner" }),
-		                    t(badge.key)
-		                  ] })
+		                  /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Doodle, { skill }),
+		                  /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(TypeIcon, { skill, size: 42 }),
+		                  BETA.includes(skill) && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "bda-tile-beta", children: t("tile.beta") })
 		                ] }),
-		                /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "bda-tile-label", children: t(`type.${skill}`) })
+		                /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("span", { className: "bda-tile-label", children: [
+		                  t(`type.${skill}`),
+		                  status !== null && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("span", { className: "bda-tile-state", "data-state": status.state, children: [
+		                    status.state === "running" && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "bda-spinner" }),
+		                    t(status.key)
+		                  ] })
+		                ] })
 		              ]
 		            }
 		          ) }, skill);
-		        }) })
+		        }) }),
+		        peek !== null && tiles.includes(peek.skill) && popup === null && installing === null && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+		          TilePeek,
+		          {
+		            skill: peek.skill,
+		            anchor: peek.anchor,
+		            status: statusOf(peek.skill),
+		            t,
+		            onAct: () => tileAct(peek.skill),
+		            onEnter: () => {
+		              overPeek.current = true;
+		              clearTimeout(peekTimer.current);
+		            },
+		            onLeave: () => {
+		              overPeek.current = false;
+		              hidePeek();
+		            },
+		            onClose: closePeek
+		          }
+		        )
 		      ] }),
 		      state.status === "loading" && state.artifacts.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("ul", { className: "bda-grid bda-skeleton", "aria-hidden": "true", children: [0, 1, 2].map((i) => /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("li", { className: "bda-item", children: /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "bda-card", children: [
 		        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { className: "bda-preview" }),
@@ -1985,6 +2329,7 @@ window.__ModuleLoader__.load({
 		        canInstall: canInstall(),
 		        canOpenPlugins: canOpenPlugins(),
 		        ready: usable.includes(installing),
+		        ...withReplaced(updateState.updates.find((u) => u.name === pluginOf(installing))?.replaces?.name),
 		        t,
 		        onClose: () => setInstalling(null),
 		        onInstall: () => install2(installing),
@@ -2079,11 +2424,24 @@ window.__ModuleLoader__.load({
 		  const open = (view) => {
 		    if (store.getSnapshot().opening !== null) return;
 		    if (!ownPluginThere(view)) return;
+		    const away = onAnotherDevice();
+		    const pending = away ? pendingWindow() : null;
+		    if (away && pending === null) {
+		      toast(t("open.blocked"), "error");
+		      return;
+		    }
+		    const show = (url) => pending ? pending.go(url) : window.open(url, "_blank", "noopener,noreferrer");
 		    store.set({ opening: view.root, toast: null });
 		    void (async () => {
 		      try {
 		        const response = await fetch(`${route2(openPath)}?${new URLSearchParams({ root: view.root })}`, { method: "POST" });
 		        const body = await response.json().catch(() => ({}));
+		        if (body.remote === "unsupported") {
+		          pending?.close();
+		          store.set({ opening: null });
+		          toast(t("open.remoteOld", { plugin: view.plugin }), "error");
+		          return;
+		        }
 		        if (!response.ok || typeof body.url !== "string") throw new Error(typeof body.error === "string" ? body.error : `HTTP ${response.status}`);
 		        const url = body.url;
 		        const sessionId = typeof body.sessionId === "string" ? body.sessionId : view.sessionId;
@@ -2095,16 +2453,17 @@ window.__ModuleLoader__.load({
 		        const reachable = workspace !== void 0 && linkState(sessionId, sessions?.list?.getSnapshot(), workspaces?.list?.getSnapshot()) === "available";
 		        if (reachable) {
 		          workspace.openSession(sessionId);
-		          const shown = sidebar !== void 0 && tabs?.get("browser") !== void 0 && await openInSidebar(sidebar, sessionId, url);
-		          if (!shown) window.open(url, "_blank", "noopener,noreferrer");
+		          const shown = pending === null && sidebar !== void 0 && tabs?.get("browser") !== void 0 && await openInSidebar(sidebar, sessionId, url);
+		          if (!shown) show(url);
 		          store.set({ opening: null });
 		        } else {
-		          window.open(url, "_blank", "noopener,noreferrer");
+		          show(url);
 		          store.set({ opening: null });
 		          toast(t("open.noSession"));
 		        }
 		        reload();
 		      } catch (error) {
+		        pending?.close();
 		        store.set({ opening: null });
 		        toast(t("open.failed", { message: error.message }), "error");
 		      }
@@ -2164,6 +2523,7 @@ window.__ModuleLoader__.load({
 		  };
 		  const copyLink = (view) => {
 		    if (!ownPluginThere(view)) return;
+		    if (onAnotherDevice()) return toast(t("toast.copyRemote"));
 		    void (async () => {
 		      try {
 		        const { url } = await call(previewPath, { root: view.root });
@@ -2365,6 +2725,7 @@ window.__ModuleLoader__.load({
 		    simple: str(source.plugin) === SIMPLE_CARD,
 		    title: str(source.title),
 		    url: str(source.url),
+		    root: str(source.root),
 		    threads: threads.map((t) => ({ id: str(t.id), where: str(t.where), text: str(t.text) })).filter((t) => t.id),
 		    requests: requests.map((r) => ({ id: str(r.id), label: str(r.label), text: str(r.text) })).filter((r) => r.id && r.text),
 		    seq: event.seq
@@ -2444,7 +2805,7 @@ window.__ModuleLoader__.load({
 		function ChevronRight() {
 		  return /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("svg", { width: "12", height: "12", viewBox: "0 0 12 12", fill: "none", "aria-hidden": "true", style: iconStyle, children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("path", { d: "M4.5 3 7.5 6l-3 3", stroke: "currentColor", strokeWidth: "1.3", strokeLinecap: "round", strokeLinejoin: "round" }) });
 		}
-		function Card2({ simple, title, thread, url, t, openThread }) {
+		function Card2({ simple, title, thread, url, root, t, openThread }) {
 		  const [open, setOpen] = (0, import_react3.useState)(true);
 		  const heading = t("card.title", { title });
 		  const meta = !simple && (thread.where || url);
@@ -2457,7 +2818,7 @@ window.__ModuleLoader__.load({
 		    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "bdc-body", children: thread.text }),
 		    meta && open && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "bdc-meta", children: [
 		      thread.where && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "bdc-where", children: thread.where }),
-		      url && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("button", { type: "button", className: "bdc-view", onClick: () => openThread(url, thread.id), children: [
+		      url && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("button", { type: "button", className: "bdc-view", onClick: () => openThread(url, thread.id, root), children: [
 		        t("card.view"),
 		        /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(ChevronRight, {})
 		      ] })
@@ -2483,13 +2844,25 @@ window.__ModuleLoader__.load({
 		  ] });
 		}
 		function CommentCards({ node, t, openThread }) {
-		  const { simple, title, url, threads, requests } = node.data;
+		  const { simple, title, url, root, threads, requests } = node.data;
 		  return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "bdc-row", children: [
-		    threads.map((thread) => /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Card2, { simple: simple === true, title, thread, url, t, openThread }, thread.id)),
+		    threads.map((thread) => /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Card2, { simple: simple === true, title, thread, url, root, t, openThread }, thread.id)),
 		    (requests ?? []).map((request) => /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(RequestCardView, { title, request, t }, request.id))
 		  ] });
 		}
 		var inject = ["slots", "locale", "uiConversation"];
+		async function openRemote(root, threadId) {
+		  const pending = pendingWindow();
+		  if (!pending) return;
+		  try {
+		    const response = await fetch(`${openPath.slice(1)}?${new URLSearchParams({ root })}`, { method: "POST" });
+		    const body = await response.json().catch(() => ({}));
+		    if (!response.ok || typeof body.url !== "string") throw new Error(`HTTP ${response.status}`);
+		    pending.go(threadUrl(body.url, threadId));
+		  } catch {
+		    pending.close();
+		  }
+		}
 		function threadUrl(url, id) {
 		  try {
 		    const at = new URL(url);
@@ -2523,7 +2896,8 @@ window.__ModuleLoader__.load({
 		        key: KIND,
 		        locale: NS3,
 		        inject: (sessionId) => ({
-		          openThread: (url, threadId) => {
+		          openThread: (url, threadId, root) => {
+		            if (root && onAnotherDevice()) return void openRemote(root, threadId);
 		            const target = threadUrl(url, threadId);
 		            const sidebar = ctx.get("sidebarRight");
 		            const tabs = ctx.get("sidebarRightTabs");

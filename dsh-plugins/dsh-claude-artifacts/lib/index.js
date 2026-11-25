@@ -1,5 +1,5 @@
-// dsh-claude-artifacts 2.13.0: built from baoyu-design.
-var define_SKILLS_default = [{ name: "claude-slides", plugin: "dsh-claude-slides", comments: true, published: true }, { name: "claude-design", plugin: "dsh-claude-design", comments: true, published: true }, { name: "claude-design-system", plugin: "dsh-claude-design-system", comments: true, published: true }, { name: "claude-dashboard", plugin: "dsh-claude-dashboard", comments: true, published: true }, { name: "claude-docs", plugin: "dsh-claude-docs", comments: true, commentsBy: "mention", requests: true, published: false }, { name: "claude-motion", plugin: "dsh-claude-motion", comments: true, requests: true, published: true }, { name: "claude-whiteboard", plugin: "dsh-claude-whiteboard", comments: true, published: true }];
+// dsh-claude-artifacts 2.15.2: built from baoyu-design.
+var define_SKILLS_default = [{ name: "claude-slides", plugin: "dsh-claude-slides", comments: true, published: true }, { name: "claude-design", plugin: "dsh-claude-design", comments: true, published: true }, { name: "claude-design-system", plugin: "dsh-claude-design-system", comments: true, published: true }, { name: "claude-data", plugin: "dsh-claude-data", comments: true, published: true }, { name: "claude-docs", plugin: "dsh-claude-docs", comments: true, commentsBy: "mention", requests: true, published: false }, { name: "claude-motion", plugin: "dsh-claude-motion", comments: true, requests: true, published: true }, { name: "claude-whiteboard", plugin: "dsh-claude-whiteboard", comments: true, published: true }, { name: "claude-sheets", plugin: "dsh-claude-sheets", comments: true, requests: true, published: false }];
 
 import { spawn as spawn2 } from "node:child_process";
 import { randomUUID } from "node:crypto";
@@ -13,6 +13,19 @@ import { createHash } from "node:crypto";
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { basename, dirname, join, parse } from "node:path";
+
+function hostName(host) {
+  const value = host.trim().toLowerCase();
+  if (value.startsWith("[")) {
+    const end = value.indexOf("]");
+    return end > 0 ? value.slice(1, end) : value.slice(1);
+  }
+  return value.split(":").length === 2 ? value.slice(0, value.indexOf(":")) : value;
+}
+function isLoopbackName(name2) {
+  const n = name2.toLowerCase().replace(/^\[|\]$/g, "");
+  return n === "localhost" || n.endsWith(".localhost") || /^127\.\d+\.\d+\.\d+$/.test(n) || n === "::1" || n === "0:0:0:0:0:0:0:1" || n === "::ffff:127.0.0.1";
+}
 
 function isNewer(a, b) {
   const parts = (version) => {
@@ -44,7 +57,7 @@ var TITLES = {
   "claude-slides": ["project/deck.json", "title"],
   "claude-design": ["project/canvas.json", "title"],
   "claude-design-system": ["project/design-system.json", "title"],
-  "claude-dashboard": ["db/dash/meta.json", "title"],
+  "claude-data": ["db/dash/meta.json", "title"],
   "claude-docs": ["doc.json", "name"],
   "claude-motion": ["db/film/meta.json", "title"],
   "claude-whiteboard": ["db/board/meta.json", "title"]
@@ -56,10 +69,11 @@ var FOLDER = {
   "claude-slides": ["project"],
   "claude-design": ["project"],
   "claude-design-system": ["project"],
-  "claude-dashboard": ["db", "_blobs", "src"],
+  "claude-data": ["db", "_blobs", "src"],
   "claude-docs": ["doc.json", "tabs", "_blobs", ".sessions.json"],
   "claude-motion": ["db", "_blobs", "src"],
-  "claude-whiteboard": ["db", "_blobs"]
+  "claude-whiteboard": ["db", "_blobs"],
+  "claude-sheets": ["sheet.json", "edits.jsonl", "widgets"]
 };
 var NOT_CONTENT = /* @__PURE__ */ new Set([...EDITOR_FILES, ".sessions.json", ".git", "node_modules"]);
 var STAMP_MAX_ENTRIES = 2e4;
@@ -95,10 +109,15 @@ function isRecord(value) {
   const r = value;
   return typeof r === "object" && r !== null && r.v === 1 && typeof r.root === "string" && typeof r.skill === "string" && typeof r.plugin === "string" && typeof r.sessionId === "string" && typeof r.title === "string" && typeof r.openedAt === "string";
 }
+var RENAMED = {
+  "claude-dashboard": "claude-data",
+  "dsh-claude-dashboard": "dsh-claude-data"
+};
 function readRecord(file) {
   try {
     const value = JSON.parse(readFileSync(file, "utf8"));
-    return isRecord(value) ? value : null;
+    if (!isRecord(value)) return null;
+    return { ...value, skill: RENAMED[value.skill] ?? value.skill, plugin: RENAMED[value.plugin] ?? value.plugin };
   } catch {
     return null;
   }
@@ -237,20 +256,38 @@ function runScript(node, script, args, input) {
       if (code === 0) return resolve(firstJson(stdout));
       const failure = firstJson(stderr) ?? firstJson(stdout);
       const message = typeof failure?.message === "string" ? failure.message : stderr.trim() || `${args[0]} exited with ${code ?? "a signal"}`;
-      reject(new Error(message));
+      reject(Object.assign(new Error(message), typeof failure?.error === "string" ? { code: failure.error } : {}));
     });
   });
 }
-async function runOpen(node, script, root) {
-  const out = await runScript(node, script, ["open", root]);
+function remoteHostOf(headers, env = process.env) {
+  const set = env.BAOYU_DESIGN_REMOTE_HOST?.trim();
+  if (set === "off") return null;
+  const forwarded = headers.get("x-forwarded-host")?.split(",")[0] ?? "";
+  const name2 = hostName(forwarded || headers.get("host") || "");
+  if (!name2 || isLoopbackName(name2)) return null;
+  return set || name2;
+}
+async function runOpen(node, script, root, remoteHost = null) {
+  const args = ["open", root, ...remoteHost ? [`--remote=${remoteHost}`] : []];
+  let out;
+  try {
+    out = await runScript(node, script, args);
+  } catch (error) {
+    if (!remoteHost || error.code !== "REMOTE_UNSUPPORTED") throw error;
+    await runScript(node, script, ["stop", root]);
+    out = await runScript(node, script, args);
+  }
   if (typeof out?.url !== "string") throw new Error("open printed no address");
-  return { url: out.url, reused: out.reused === true };
+  const reused = out.reused === true;
+  if (!remoteHost) return { url: out.url, reused };
+  return typeof out.remoteUrl === "string" ? { url: out.remoteUrl, reused } : { url: out.url, reused, remote: "unsupported" };
 }
 async function renameArtifact(node, script, record, title) {
   const { root, skill } = record;
   const at = TITLES[skill];
-  if (at === void 0) throw new Error(`no title to change for ${skill}`);
-  if (skill === "claude-dashboard" || skill === "claude-motion" || skill === "claude-whiteboard") {
+  if (at === void 0) return;
+  if (skill === "claude-data" || skill === "claude-motion" || skill === "claude-whiteboard") {
     const path = at[0].replace(/^db\//, "").replace(/\.json$/, "");
     await runScript(node, script, ["write-db", root, "-"], JSON.stringify([{ op: "update", path, data: { [at[1]]: title } }]));
     return;
@@ -339,13 +376,13 @@ function registerRoutes(routes, host, opened) {
     path: listPath,
     methods: ["GET"],
     requestBody: "buffered",
-    fetch: () => {
+    fetch: async () => {
       const known = /* @__PURE__ */ new Map();
       const openable = (skill) => {
         if (!known.has(skill)) known.set(skill, host.script(skill) !== null);
         return known.get(skill) === true;
       };
-      return Promise.resolve(json({ artifacts: listArtifacts(openable), ...host.places() }));
+      return json({ artifacts: listArtifacts(openable), ...await host.places() });
     }
   });
   routes.register({
@@ -375,7 +412,8 @@ function registerRoutes(routes, host, opened) {
       const script = host.script(record.skill);
       if (script === null) return notInstalled(record);
       try {
-        const { url, reused } = await runOpen(node, script, root);
+        const { url, reused, remote } = await runOpen(node, script, root, remoteHostOf(request.headers));
+        if (remote) return json({ error: `the ${record.plugin} plugin is of an earlier release, which cannot open it on another device: update it`, remote }, 409);
         const again = recordOpened(record.skill, record.plugin, record.sessionId, root);
         opened(again, script);
         return json({ url, reused, sessionId: again.sessionId, title: again.title });
@@ -465,15 +503,16 @@ function registerRoutes(routes, host, opened) {
       const patch = await request.json().catch(() => null);
       if (patch === null || typeof patch !== "object") return json({ error: "not a JSON object" }, 400);
       try {
+        let renamed = null;
         if (patch.title !== void 0) {
-          const title = cleanTitle(patch.title);
-          if (title === null) return json({ error: "a title cannot be empty" }, 400);
+          renamed = cleanTitle(patch.title);
+          if (renamed === null) return json({ error: "a title cannot be empty" }, 400);
           const script = host.script(record.skill);
           if (script === null) return notInstalled(record);
-          await renameArtifact(node, script, record, title);
+          await renameArtifact(node, script, record, renamed);
         }
         const now = findArtifact(root) ?? record;
-        const next = { ...now, title: artifactTitle(record.skill, root) ?? now.title };
+        const next = { ...now, title: artifactTitle(record.skill, root) ?? renamed ?? now.title };
         if (patch.pinned === true) next.pinned = true;
         else if (patch.pinned === false) delete next.pinned;
         writeRecord(next);
@@ -622,10 +661,11 @@ async function notesOn(registry, name2, version) {
     return null;
   }
 }
-function updateChecker(names, manager) {
+function updateChecker(names, manager, renamed = {}, presetsNaming2 = () => []) {
   const known = /* @__PURE__ */ new Map();
   const notesKnown = /* @__PURE__ */ new Map();
-  const notesFor = async (updates) => {
+  const notesFor = async (offered) => {
+    const updates = offered.filter((u) => u.spec !== "");
     if (updates.length === 0) return [];
     const newest = updates.reduce((best, u) => isNewer(u.latest, best.latest) ? u : best);
     const oldest = updates.reduce((low, u) => isNewer(low, u.version) ? u.version : low, newest.version);
@@ -655,7 +695,10 @@ function updateChecker(names, manager) {
   return async () => {
     const service = manager();
     if (service === void 0) return { updates: [], failed: [], notes: [] };
-    const ours = (await service.listBundles()).filter((b) => b.installed === true && names.includes(b.name) && typeof b.version === "string" && fromRegistry(b.name, b.source));
+    const bundles = await service.listBundles();
+    const fromHere = (b) => b.installed === true && typeof b.version === "string" && fromRegistry(b.name, b.source);
+    const ours = bundles.filter((b) => fromHere(b) && names.includes(b.name));
+    const renamedHere = bundles.filter((b) => fromHere(b) && renamed[b.name] !== void 0 && names.includes(renamed[b.name]));
     let plan;
     const asked = () => plan ??= registryPlan(service);
     const updates = [];
@@ -669,7 +712,28 @@ function updateChecker(names, manager) {
         }
       })
     );
-    updates.sort((a, b) => ours.findIndex((o) => o.name === a.name) - ours.findIndex((o) => o.name === b.name));
+    await Promise.all(
+      renamedHere.map(async (old) => {
+        const name2 = renamed[old.name];
+        const keptBy = presetsNaming2(old.name);
+        const replaces = { name: old.name, version: old.version, ...keptBy.length > 0 ? { keptBy } : {} };
+        const installed = bundles.find((b) => b.name === name2 && b.installed === true);
+        if (installed !== void 0) {
+          const update = updates.find((u) => u.name === name2);
+          if (update !== void 0) update.replaces = replaces;
+          else if (keptBy.length === 0) {
+            const version = installed.version ?? "";
+            updates.push({ name: name2, version, latest: version, spec: "", registry: "", enabled: installed.enabled !== false, native: false, replaces });
+          }
+          return;
+        }
+        const release = await releaseOf(name2, asked);
+        if (release === null) failed.push(name2);
+        else updates.push({ name: name2, version: old.version, latest: release.version, spec: release.tarball, registry: release.registry, enabled: old.enabled !== false, native: false, replaces });
+      })
+    );
+    const at = (u) => bundles.findIndex((b) => b.name === (u.replaces !== void 0 && !bundles.some((o) => o.name === u.name && o.installed === true) ? u.replaces.name : u.name));
+    updates.sort((a, b) => at(a) - at(b));
     return { updates, failed, notes: await notesFor(updates) };
   };
 }
@@ -794,11 +858,11 @@ function commentMessage(skill, plugin, out, root) {
     "",
     ...threads.length > 0 ? [`Handle the comments as Comments says (${how}).`] : [],
     ...requests.length > 0 ? [
-      "Each request is one of the page's buttons (`label`) asking for its `text`: those are the user's words, as if",
-      "typed here. Handle each as the skill says for those words."
+      "These are requests from the page's buttons (the button in `label`, what it asks in `text`), as",
+      "`comments <root> --wait` printed them for this page: handle each as the skill says for the page's requests."
     ] : [],
     'Run the script as "Running the calls in DeepSeek Harness" says.',
-    "DeepSeek Harness is already waiting for the next ones: do not run `comments --wait`."
+    "DeepSeek Harness waits for the next ones when this turn ends: do not run `comments --wait`."
   ].join("\n");
   const first = threads[0];
   const asked = requests[0];
@@ -956,19 +1020,32 @@ function pluginFinder(ctx) {
     return null;
   };
 }
-function skillPlaces(ctx, find) {
+async function installedCheck(manager, find) {
+  try {
+    const bundles = await manager?.listBundles();
+    if (bundles !== void 0) {
+      const names = new Set(bundles.filter((b) => b.installed === true).map((b) => b.name));
+      return (skill) => names.has(skill.plugin);
+    }
+  } catch {
+  }
+  return (skill) => find(skill) !== null;
+}
+function presetsNaming(presets, plugin) {
+  return [...new Set((presets?.inspectCompositions?.() ?? []).filter((c) => c.modules.some((m) => m.moduleName === plugin)).map((c) => c.id))];
+}
+function skillPlaces(ctx, installed) {
   const loader = ctx.get("loader");
   const presets = ctx.get("agentPresets");
   const rows = /* @__PURE__ */ new Set();
   for (const entry of loader?.entries?.() ?? []) if (!entry.disabled && entry.fiber !== void 0) rows.add(entry.options.name);
-  const compositions = presets?.inspectCompositions?.() ?? [];
   return {
     skills: SKILLS.map((skill) => ({
       skill: skill.name,
       plugin: skill.plugin,
       everywhere: rows.has(skill.plugin),
-      presets: [...new Set(compositions.filter((c) => c.modules.some((m) => m.moduleName === skill.plugin)).map((c) => c.id))],
-      missing: skill.published && find(skill) === null
+      presets: presetsNaming(presets, skill.plugin),
+      missing: skill.published && !installed(skill)
     })),
     ...typeof presets?.defaultId === "string" ? { defaultPreset: presets.defaultId } : {}
   };
@@ -990,12 +1067,13 @@ function start(ctx, node) {
     }
   });
   const manager = () => ctx.get("pluginManager");
-  const updates = updateChecker([PLUGIN, ...SKILLS.map((skill) => skill.plugin)], manager);
+  const renamed = Object.fromEntries(Object.entries(RENAMED).filter(([, to]) => SKILLS.some((skill) => skill.plugin === to && skill.published)));
+  const updates = updateChecker([PLUGIN, ...SKILLS.map((skill) => skill.plugin)], manager, renamed, (plugin) => presetsNaming(ctx.get("agentPresets"), plugin));
   const install = async (plugin) => {
     const skill = SKILLS.find((s) => s.plugin === plugin);
     if (skill === void 0 || !skill.published) return { error: `${plugin || "that"} is not a plugin baoyu-design publishes`, status: 404 };
-    if (find(skill) !== null) return { error: `${plugin} is installed already`, status: 409 };
     const service = manager();
+    if ((await installedCheck(service, find))(skill)) return { error: `${plugin} is installed already`, status: 409 };
     if (service === void 0) return { error: "this app has no plugin manager", status: 503 };
     try {
       return await installTarget(service, plugin, ownVersion()) ?? { error: `no registry has ${plugin}`, status: 502 };
@@ -1004,15 +1082,15 @@ function start(ctx, node) {
     }
   };
   ctx.inject?.(["connection"], (sub) => {
-    registerRoutes(
-      sub.connection.fetch,
+    registerWhenFree(sub, (routes) => registerRoutes(
+      routes,
       {
         node,
         script: (name2) => {
           const skill = SKILLS.find((s) => s.name === name2);
           return skill === void 0 ? null : find(skill)?.script ?? null;
         },
-        places: () => skillPlaces(ctx, find),
+        places: async () => skillPlaces(ctx, await installedCheck(manager(), find)),
         updates,
         installTarget: install
       },
@@ -1020,13 +1098,44 @@ function start(ctx, node) {
         const skill = SKILLS.find((s) => s.name === record.skill);
         if (skill?.comments) watcher.watch(skill, script, record.sessionId, record.root);
       }
-    );
+    ), (message) => ctx.logger?.warn?.(`${PLUGIN}: ${message}`));
   });
+}
+var ROUTES_RETRY_MS = 100;
+var ROUTES_TRIES = 100;
+function registerWhenFree(sub, register, warn) {
+  let timer;
+  let gone = false;
+  sub.effect?.(() => () => {
+    gone = true;
+    clearTimeout(timer);
+  }, `${PLUGIN}: waiting for the routes`);
+  const attempt = (left) => {
+    if (gone) return;
+    const got = [];
+    try {
+      register({
+        register: (route) => {
+          const undo = sub.connection.fetch.register(route);
+          got.push(undo);
+          return undo;
+        }
+      });
+    } catch (error) {
+      for (const undo of got.reverse()) if (typeof undo === "function") undo();
+      const message = error?.message ?? String(error);
+      if (left > 1 && /already registered/i.test(message)) timer = setTimeout(() => attempt(left - 1), ROUTES_RETRY_MS);
+      else warn(`the Artifacts page's routes: ${message}`);
+    }
+  };
+  attempt(ROUTES_TRIES);
 }
 function apply(ctx, config = {}) {
   const node = resolveNode(PLUGIN, config ?? {});
-  const leave = joinHost(() => start(ctx, node));
-  ctx.effect(() => leave, `${PLUGIN}: the one running`);
+  let leave = () => {
+  };
+  ctx.effect(() => () => leave(), `${PLUGIN}: the one running`);
+  leave = joinHost(() => start(ctx, node));
 }
 export {
   COMMENT_SOURCE,

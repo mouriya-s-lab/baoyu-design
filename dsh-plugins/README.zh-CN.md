@@ -9,7 +9,7 @@
 | [Claude 幻灯片](dsh-claude-slides/)<br>`/claude-slides` | [`dsh-claude-slides`](https://www.npmjs.com/package/dsh-claude-slides) | Agent 把可编辑的幻灯片写成本地文件，并在本地幻灯片编辑器里打开，你可以放映、修改，导出 PDF、HTML 或 PowerPoint。 | Send to Agent |
 | [Claude 设计稿](dsh-claude-design/)<br>`/claude-design` | [`dsh-claude-design`](https://www.npmjs.com/package/dsh-claude-design) | Agent 把可编辑的设计画布（多个画板并排）写成本地文件，并在本地画布编辑器里打开，你可以改文字、调参数，也可以把评论发给 Agent 修改。 | Send to Agent |
 | [Claude 设计系统](dsh-claude-design-system/)<br>`/claude-design-system` | [`dsh-claude-design-system`](https://www.npmjs.com/package/dsh-claude-design-system) | Agent 把设计系统（设计令牌、字体样式、组件、素材和品牌手册）写成本地文件，并在本地页面里打开，你可以浏览、修改，也可以把评论发给 Agent 修改。 | Send to Agent |
-| [Claude 数据看板](dsh-claude-dashboard/)<br>`/claude-dashboard` | [`dsh-claude-dashboard`](https://www.npmjs.com/package/dsh-claude-dashboard) | Agent 根据你的数据文件做出数据看板（图表、数字和表格），并在本地看板编辑器里打开，来源面板会显示每个数字是从哪里来的，你也可以把评论发给 Agent 修改。 | Send to Agent |
+| [Claude 数据](dsh-claude-data/)<br>`/claude-data` | [`dsh-claude-data`](https://www.npmjs.com/package/dsh-claude-data) | Agent 根据你的数据文件做出数据看板（图表、数字和表格），并在本地看板编辑器里打开，来源面板会显示每个数字是从哪里来的，你也可以把评论发给 Agent 修改。 | Send to Agent |
 | [Claude 动画](dsh-claude-motion/)<br>`/claude-motion` | [`dsh-claude-motion`](https://www.npmjs.com/package/dsh-claude-motion) | Agent 用代码一幕一幕地写出短动画（讲解视频、产品演示、片头等），在本地 Motion 播放器里播放。你可以看着它一点点成形，在某个时刻留评论，再导出 MP4 或 GIF。 | Send to Agent |
 | [Claude 白板](dsh-claude-whiteboard/)<br>`/claude-whiteboard` | [`dsh-claude-whiteboard`](https://www.npmjs.com/package/dsh-claude-whiteboard) | Agent 把示意图、流程、想法地图、计划和对比摆在一块白板上，在本地白板编辑器里打开。你可以拖动、画画、打字、留评论，再把评论发给 Agent。 | Send to Agent |
 
@@ -63,7 +63,7 @@ dsh plugin --profile web add dsh-claude-slides
 
 在这一页还可以：
 
-- **新做一个。** 点顶部的入口（幻灯片、设计、看板……）或右上角的 **+**，应用会新开一个会话，输入框里填好开头（比如 `/claude-slides 帮我做一份幻灯片，主题是：`），接着写完发送，Agent 就会用对应的技能。还没安装的插件也有入口，颜色淡一些，标着「未安装」：点一下会说明这个插件做什么，点「安装」就在这一页装上（应用不支持在这里安装时，会提示你去「插件」页装）。装好以后它的入口和其他的一样用；要是提示重启，退出应用再重新打开。你关掉的插件没有入口。
+- **新做一个。** 点顶部的入口（幻灯片、设计、数据……）或右上角的 **+**。鼠标停在入口上（或用 Tab 移过去），会弹出一张卡片，说明这类作品是什么，上面有开始做的按钮。点入口后，应用会新开一个会话，输入框里填好开头（比如 `/claude-slides 帮我做一份幻灯片，主题是：`），接着写完发送，Agent 就会用对应的技能。还没安装的插件也有入口，颜色淡一些，标着「未安装」：点一下会说明这个插件做什么，点「安装」就在这一页装上（应用不支持在这里安装时，会提示你去「插件」页装）。装好以后它的入口和其他的一样用；要是提示重启，退出应用再重新打开。你关掉的插件没有入口。
 - **看缩略图。** 桌面版会打开一次编辑器给每个作品截图，文件改过以后再回到这一页会重新截。`dsh web` 里截不了图，卡片上是一张示意图。
 - **换视图、搜索、排序和筛选。** 右上角可以切换网格和列表，可以按标题、对话或路径搜索，可以按最近打开、最近修改、创建时间、名称排序，按类型、打开时间、是否共享、是否固定筛选。
 - **固定、重命名、复制链接、删除。** 鼠标移到作品上，点 **…**（菜单打开时也可以按 P、R、C）。重命名会改编辑器里的标题。复制的是本机的编辑器地址，编辑器会一直开着。删除会把文件夹移到应用数据目录（默认 `~/.dsh`）的 `baoyu-design/trash/`，提示条上可以撤销，要彻底删除就到那里删；文件夹里还有别的文件时只从这一页移除，文件夹留在原处。
@@ -77,12 +77,12 @@ dsh plugin --profile web add dsh-claude-slides
 
    ```yaml
    - insert:
-       - id: preset-slides-dashboard
+       - id: preset-slides-data
          name: '@deepseek-ai/dsh-agent-preset'
          config:
-           id: slides-dashboard
-           name: Slides and dashboards
-           description: Only the claude-slides and claude-dashboard skills.
+           id: slides-data
+           name: Slides and data
+           description: Only the claude-slides and claude-data skills.
            order: 10
            plugins:
              - id: persona
@@ -101,14 +101,23 @@ dsh plugin --profile web add dsh-claude-slides
                name: '@deepseek-ai/dsh-tool-skill'
              - id: claude-slides
                name: dsh-claude-slides
-             - id: claude-dashboard
-               name: dsh-claude-dashboard
+             - id: claude-data
+               name: dsh-claude-data
    ```
 
    预设里写了什么，它的会话就只有什么，所以这个例子列出了技能要用的工具：命令行、读写文件、加载技能。**设置** → **Agent 预设** 能看到内置预设的内容，预设加载失败时也会在那里说明原因。
 3. **退出应用再重新打开**，新开一个会话，在输入框上方的模式菜单里选这个预设。输入 `/` 时这里有这些技能，其他预设里没有。
 
 「作品」页照常工作：做过的东西都还在，也都打得开，哪怕它的技能已经不在任何预设里，只要插件还装着。页面上的入口会在含有这个技能的预设里新开会话，评论也照样能送到 Agent。
+
+## 在另一台设备上用
+
+Harness 可以跑在一台电脑上，你在另一台设备上用：比如服务器上跑 `dsh web`，你在笔记本或手机的浏览器里通过同一个局域网或 tailnet 打开它。编辑器跑在运行 Harness 的那台电脑上，Agent 给的链接（`http://127.0.0.1:…`）只在那台电脑上打得开。在另一台设备上，改从 **Artifacts**（「作品」）打开，或者点评论卡片上的 **View thread**。插件会给这台设备一个你本人的链接，地址就是浏览器访问 Harness 用的那个，在新标签页里打开。通过它打开，你就是编辑器的主人，和在那台电脑上一样：能编辑，也有 Send to Agent。
+
+- **另一台设备要能通过这个地址访问到编辑器。** 同一个局域网或 tailnet 里没问题。Harness 跑在容器里的，让容器用宿主机的网络（`--network host`）。
+- **经过代理或用自己的域名访问时**，浏览器用的地址不一定通到编辑器。在 Harness 的环境变量里把 `BAOYU_DESIGN_REMOTE_HOST` 设成其他设备访问那台电脑用的地址（IP 或名字，不带端口），再重启 Harness。设成 `off` 就完全关掉这个功能。
+- **这个链接是你本人进入编辑器的钥匙，走的是明文 http。** 只在自己的设备上用；要让别人进来，在编辑器里点「分享」。在不信任的网络上，用 Tailscale 这样的 tailnet。要换一把钥匙，让 Agent 运行技能的 `share <文件夹> --reset owner`。在另一台设备上，「作品」页的「复制链接」不会复制它。
+- **什么也没打开**：允许这个网站弹出窗口。页面提示插件版本较旧的，在「作品」页更新它。
 
 ## 更新
 
@@ -131,6 +140,8 @@ dsh plugin --profile web add dsh-claude-slides
 3. 退出应用再重新打开，再新开一个会话。
 
 从「发现」安装马上就能装到新版本。新版本发布后的一天之内，用插件名添加装到的还是上一版：应用用的包管理器 pnpm 会把新发布的版本压 24 小时。想马上用新版本，就连版本号一起填，比如 `dsh-claude-slides@2.4.0`。
+
+**Claude 数据看板改名为 Claude 数据。** `dsh-claude-dashboard` 在 2.14.0 改名为 `dsh-claude-data`。「作品」页会把换到新插件当作一项更新来提示，写作 `claude-dashboard → claude-data`：点 **Update**（更新）会先装上 `dsh-claude-data`（开关和旧插件一样），再卸载 `dsh-claude-dashboard`。从「数据」入口安装也一样。你做好的看板用新插件照样能打开，「作品」页上也都还在。改名之前版本的「作品」页（入口写的是「看板」而不是「数据」）提示的是一个新版的 `dsh-claude-dashboard`：它不带技能，只带来会提示换插件的新版「作品」页，所以等这一项出现后再点一次 **Update**（更新）。如果你的某个预设里写着 `dsh-claude-dashboard`（见[只让某个预设用某个技能](#只让某个预设用某个技能)），预设离不开它，旧插件就先留着：把那一行改成 `name: dsh-claude-data`，再到插件页卸载 `dsh-claude-dashboard`。没有提示更新的话，按[安装](#安装)的步骤用插件名添加 `dsh-claude-data`，再到插件页卸载 `dsh-claude-dashboard`（提示插件正在使用的话，退出应用重新打开，再卸载一次）。
 
 **从文件夹安装的插件**不会提示新版本：把新版本放到同一个文件夹（在仓库里 `git pull`，或者重新下载 ZIP 解压覆盖旧的），然后退出应用再重新打开，再新开一个会话。
 

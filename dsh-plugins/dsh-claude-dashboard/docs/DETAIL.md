@@ -1,27 +1,19 @@
-# Claude Dashboard
+# Claude Dashboard is now Claude Data
 
-Adds the **claude-dashboard** skill to DeepSeek Harness. Ask for a dashboard ("a dashboard of this sales CSV by month
-and region") and the agent builds it as files in your workspace: a folder holding the datasets, the files they load
-and the page. It then starts a local dashboard editor and gives you its link.
+`dsh-claude-dashboard` was renamed `dsh-claude-data` in baoyu-design 2.14.0. This version of it has no skill. What it
+brings is the current `dsh-claude-artifacts`, the part the baoyu-design plugins share, and that one offers the move.
 
-## Using it
+## Moving to Claude Data
 
-- Ask for a dashboard, metrics page, KPI tracker or report in plain words, or type `/claude-dashboard` to call the
-  skill by name. Give it a CSV, TSV or JSON file, or ask it to gather the data.
-- Open the link the agent gives you. In the desktop app it opens in the right sidebar's Browser, beside the
-  conversation (Settings → General → Open chat links in: **In-App Sidebar**, the default).
-- The Sources panel shows where every number comes from, and downloads a source's rows as CSV. The agent's changes
-  show up in the page as it writes them.
-- Comment on a chart, a number, a table or any other part of the page (Comment, or C). Tick **Send to Agent** and the
-  agent picks it up at once, even when the conversation is idle: it changes the dashboard and replies in the comment.
-  The comment also shows in the chat as a card; **View thread** on the card opens it in the editor. The box is there
-  while comments can reach the agent, which starts each time it gives you the link. After restarting the app, ask the
-  agent to open the dashboard again to bring it back.
-- To change or refresh a dashboard later, ask the agent to revise its folder.
-- A workspace that has its own `claude-dashboard` skill (in `.agents/skills/` or `.dsh/skills/`) uses that copy
-  instead of this plugin's.
+1. Click **Update** on this plugin's page, or click **Artifacts** in the left sidebar and find
+   `claude-dashboard → claude-data` among the updates there. If neither is there yet, quit and reopen the app.
+2. Click **Update**. It installs `dsh-claude-data`, switched on or off as this plugin is, then uninstalls this plugin.
+3. Start a new session, and ask for a dashboard or type `/claude-data`.
 
-## What runs where
+The dashboards you made open in the new one as they are, and stay on the Artifacts page.
 
-The editor is a small server on 127.0.0.1 that the skill's script starts in the background, one per dashboard. It
-reads and writes only that dashboard's folder. The desktop app's own Node runtime runs it; nothing else is installed.
+If a preset of yours names `dsh-claude-dashboard` among its plugins, this plugin stays, since the preset needs it: change
+that line to `name: dsh-claude-data`, then uninstall this plugin.
+
+If no update is offered, install `dsh-claude-data` on the Plugins page (**Add plugin**, by name), then uninstall this
+plugin.

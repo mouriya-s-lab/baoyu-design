@@ -1,6 +1,6 @@
 # Claude 作品
 
-baoyu-design 各插件（Claude 幻灯片、Claude 设计稿、Claude 设计系统、Claude 数据看板、Claude 动画）共用的部分。它随每个插件一起安装，一般不用自己装。
+baoyu-design 各插件（Claude 幻灯片、Claude 设计稿、Claude 设计系统、Claude 数据、Claude 动画、Claude 白板）共用的部分。它随每个插件一起安装，一般不用自己装。
 
 ## 做什么
 

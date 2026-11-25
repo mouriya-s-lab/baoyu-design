@@ -8,7 +8,7 @@
 |---|---|
 | omp 工具映射与 Tern 显示步骤（agent 读） | `omp-tern/GUIDE.md` |
 | 在 Tern 里把编辑器开成画中画、复用、关闭；对能评论的类型输出评论监听命令（`next`） | `omp-tern/show.mjs`（Node 20+，无依赖） |
-| 四个 artifact skill 的入口 | `skills/{claude-slides,claude-design,claude-design-system,claude-dashboard}/SKILL.md` 标题段后插入一段「In omp or Tern」，以及 `omp-tern -> ../../fork-features/omp-tern` 软链接 |
+| 四个 artifact skill 的入口 | `skills/{claude-slides,claude-design,claude-design-system,claude-data}/SKILL.md` 标题段后插入一段「In omp or Tern」，以及 `omp-tern -> ../../fork-features/omp-tern` 软链接 |
 
 `dataviz` 不起编辑器、不用 Claude Code 专属工具，不接入。`GUIDE.md` 只替换工具名、增加 `open` 之后的显示与评论监听步骤；格式、工艺规则和 NEVER VERIFY 仍以上游原文为准。
 
@@ -18,7 +18,7 @@
 
 ```sh
 npx skills add mouriya-s-lab/baoyu-design -g -a codex -y \
-  -s claude-slides -s claude-design -s claude-design-system -s claude-dashboard -s dataviz
+  -s claude-slides -s claude-design -s claude-design-system -s claude-data -s dataviz
 ```
 
 `-a codex` 安装到 `~/.agents/skills/`，omp 从该目录读取 skill。skills CLI 复制 skill 目录时会解引用 `omp-tern` 软链接，安装后的每个 skill 内都有 `omp-tern/` 实体文件。

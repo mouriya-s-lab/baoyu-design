@@ -43,7 +43,7 @@ It prints JSON:
 - `{"shown":"none","url","reason","next"}`: not in a Tern pane; give `url` once, as the pages say.
 - `{"error","message"}`: Tern refused; give `url` once and name the error in a line.
 
-`next` (slides, design and design-system; a dashboard takes no comments) is the comment wait. Start it in
+`next` is the comment wait. Start it in
 the same message unless one already runs for this `<root>`. It runs alongside the rest of the work; the
 person's comments arrive as follow-up messages, also after your reply has ended.
 

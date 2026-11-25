@@ -1,6 +1,6 @@
 # Claude Artifacts
 
-What the baoyu-design plugins (Claude Slides, Claude Design, Claude Design System, Claude Dashboard, Claude Motion)
+What the baoyu-design plugins (Claude Slides, Claude Design, Claude Design System, Claude Data, Claude Motion, Claude Whiteboard)
 share. It comes with each of them, so you normally never install it yourself.
 
 ## What it does

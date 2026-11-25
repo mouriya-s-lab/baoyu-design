@@ -29,7 +29,7 @@ https://github.com/user-attachments/assets/db6c5d93-dc28-4170-8356-4dbe5725a57c
 | [`claude-slides`](skills/claude-slides/) | 幻灯片：`project/deck.json` 加上每页一个 HTML 文件 | 幻灯片编辑器：放映、改字、拖动；导出 PDF、HTML 或 PowerPoint |
 | [`claude-design`](skills/claude-design/) | 一块画布上的多个画板：`project/canvas.json` 加上 `.dc.html` 设计组件 | 画布编辑器：并排查看画板、播放原型、改文案、调 tweaks；导出 HTML、PDF、PNG 或 HTML for Figma |
 | [`claude-design-system`](skills/claude-design-system/) | 设计系统：tokens、README 品牌手册、组件预览、字体、素材分组 | 设计系统编辑器：浏览和编辑颜色、字体、组件和素材 |
-| [`claude-dashboard`](skills/claude-dashboard/) | 数据驱动的仪表盘：数据集（CSV、TSV、JSON）加上基于它们的图表、数字和表格页面 | 仪表盘页面：实时图表、筛选，以及能把每个数字追溯到原始行的 Sources 面板 |
+| [`claude-data`](skills/claude-data/) | 数据驱动的仪表盘：数据集（CSV、TSV、JSON）加上基于它们的图表、数字和表格页面 | 仪表盘页面：实时图表、筛选，以及能把每个数字追溯到原始行的 Sources 面板 |
 | [`claude-motion`](skills/claude-motion/) | 动画影片：动画视频，默认 10–30 秒，要长可以加，最长 15 分钟，用代码一场一场写进影片自己在 `<root>/db/` 下的存储 | Motion 播放器：看着它一点点写出来，改台词，拖动场景长度，调样式和 Tweaks；导出 MP4 或 GIF |
 | [`motion-director`](skills/motion-director/) | 有话要说的成片：找到要说的那一点，写适合听的旁白，配音，让每一场对上台词，再像观众那样检查画面。要和 `claude-motion` 装在一起 | 同一个 Motion 播放器，从第一分钟起就开着 |
 | [`claude-whiteboard`](skills/claude-whiteboard/) | 白板：示意图、流程、想法地图、计划和对比，一个个元素（方块、分区、箭头、表格、便签、手绘图、能操作的嵌入）写进白板自己在 `<root>/db/` 下的存储 | 白板编辑器：拖动、缩放、打字、用画笔画，加分区、便签、形状和贴纸 |
@@ -61,7 +61,7 @@ https://github.com/user-attachments/assets/db6c5d93-dc28-4170-8356-4dbe5725a57c
 
 <img src="assets/screenshots/claude-design-canvas.webp" alt="claude-design 画布上并排的咖啡订阅落地页和它的手机版注册表单" width="880">
 
-一块画布上并排放着多个画板：`project/canvas.json` 加上每个画板一个 `.dc.html` 设计组件。画板可以当成能交互的原型来播放，在画布上播或者全屏播；也可以改文案、调 tweaks、贴便签；整份设计能导出成独立的 HTML 页面、PDF 或 PNG 图片（1× 或 2×，多个画板打包成 .zip）；**HTML for Figma** 把画板存成一个没有框架的页面，给 Figma 的 Chrome 扩展捕捉用。*上图：一个咖啡订阅服务的落地页首屏，旁边是它的手机版注册表单。*
+一块画布上并排放着多个画板：`project/canvas.json` 加上每个画板一个 `.dc.html` 设计组件。画板可以当成能交互的原型来播放，在画布上播或者全屏播；也可以改文案、调 tweaks、贴便签；整份设计能导出成独立的 HTML 页面、PDF 或 PNG 图片（1× 或 2×，多个画板打包成 .zip）；**HTML for Figma** 把画板存成一个没有框架的页面，给 Figma 的 Chrome 扩展捕捉用。画板全窗口打开时，可以选一个屏幕宽度（手机、平板或桌面的尺寸）来排版，它的 Export 能把这个宽度下的整页存成 PNG。*上图：一个咖啡订阅服务的落地页首屏，旁边是它的手机版注册表单。*
 
 ### `claude-design-system`：设计系统
 
@@ -69,9 +69,9 @@ https://github.com/user-attachments/assets/db6c5d93-dc28-4170-8356-4dbe5725a57c
 
 一套设计系统包括 tokens、README 品牌手册、组件预览、字体和素材分组。在编辑器里可以浏览和编辑颜色、字体、间距、圆角、阴影、组件和素材。从组件库导入的设计系统，组件预览用的就是真组件，可以直接交互。幻灯片和画布可以安装它，之后编辑器的主题和颜色菜单就会列出它的颜色和文字样式。*上图：Nimbus，一套给天气应用做的小型设计系统。*
 
-### `claude-dashboard`：数据仪表盘
+### `claude-data`：数据仪表盘
 
-<img src="assets/screenshots/claude-dashboard.webp" alt="claude-dashboard 页面里用示例数据做的 X 账号数据仪表盘" width="880">
+<img src="assets/screenshots/claude-data.webp" alt="claude-data 页面里用示例数据做的 X 账号数据仪表盘" width="880">
 
 一个仪表盘就是数据集（CSV、TSV 或 JSON）加上一页基于它们算出来的图表、数字和表格。图表是实时的，Sources 面板能把每个数字追溯到原始数据行。拿到新导出的数据交给 Agent，它会把文件换上，页面上的数字全部重算。数字、日期和说明文字都跟着你的语言走。*上图：一年的 X 账号每日数据，用的是示例数据。*
 
@@ -112,7 +112,7 @@ node skills/claude-slides/scripts/artifact.mjs share designs/q3-review          
 | [`dsh-claude-slides`](https://www.npmjs.com/package/dsh-claude-slides) | `/claude-slides`：幻灯片 | [![npm](https://img.shields.io/npm/v/dsh-claude-slides)](https://www.npmjs.com/package/dsh-claude-slides) |
 | [`dsh-claude-design`](https://www.npmjs.com/package/dsh-claude-design) | `/claude-design`：设计画布 | [![npm](https://img.shields.io/npm/v/dsh-claude-design)](https://www.npmjs.com/package/dsh-claude-design) |
 | [`dsh-claude-design-system`](https://www.npmjs.com/package/dsh-claude-design-system) | `/claude-design-system`：设计系统 | [![npm](https://img.shields.io/npm/v/dsh-claude-design-system)](https://www.npmjs.com/package/dsh-claude-design-system) |
-| [`dsh-claude-dashboard`](https://www.npmjs.com/package/dsh-claude-dashboard) | `/claude-dashboard`：数据仪表盘 | [![npm](https://img.shields.io/npm/v/dsh-claude-dashboard)](https://www.npmjs.com/package/dsh-claude-dashboard) |
+| [`dsh-claude-data`](https://www.npmjs.com/package/dsh-claude-data) | `/claude-data`：数据仪表盘 | [![npm](https://img.shields.io/npm/v/dsh-claude-data)](https://www.npmjs.com/package/dsh-claude-data) |
 | [`dsh-claude-motion`](https://www.npmjs.com/package/dsh-claude-motion) | `/claude-motion`：动画影片 | [![npm](https://img.shields.io/npm/v/dsh-claude-motion)](https://www.npmjs.com/package/dsh-claude-motion) |
 | [`dsh-claude-whiteboard`](https://www.npmjs.com/package/dsh-claude-whiteboard) | `/claude-whiteboard`：白板 | [![npm](https://img.shields.io/npm/v/dsh-claude-whiteboard)](https://www.npmjs.com/package/dsh-claude-whiteboard) |
 
@@ -140,9 +140,11 @@ dsh plugin --profile web add dsh-claude-design
 https://jimliu.github.io/baoyu-design/dsh-plugins/index.json
 ```
 
-**更新。** 发了新版本，侧边栏的「作品」这一行会多一个 **更新** 标签，「作品」页顶部写着改了什么，点 **Update all**（全部更新）就一起更新，不用卸载；只想更新其中一个，点那一行的 **Update**（更新）。2.9.2 和更早的版本不会提示：DeepSeek Harness 0.2.2 起，在插件详情页点 **更新到 x**；更老的应用要在插件页卸载插件，再重新安装，然后退出应用再重新打开。新版本发布后的一天内，按包名装到的还是上一个版本；从「发现」安装能马上装到新版本，在包名后面加上版本号也可以，比如 `dsh-claude-design@2.4.0`（版本号见 [更新日志](CHANGELOG.zh.md)）。
+**更新。** 发了新版本，侧边栏的「作品」这一行会多一个 **更新** 标签，「作品」页顶部写着改了什么，点 **Update all**（全部更新）就一起更新，不用卸载；只想更新其中一个，点那一行的 **Update**（更新）。2.9.2 和更早的版本不会提示：DeepSeek Harness 0.2.2 起，在插件详情页点 **更新到 x**；更老的应用要在插件页卸载插件，再重新安装，然后退出应用再重新打开。新版本发布后的一天内，按包名装到的还是上一个版本；从「发现」安装能马上装到新版本，在包名后面加上版本号也可以，比如 `dsh-claude-design@2.4.0`（版本号见 [更新日志](CHANGELOG.zh.md)）。装过 `dsh-claude-dashboard` 的：它已改名 `dsh-claude-data`，「作品」页会把换到新插件当作一项更新来提示（[详细说明](dsh-plugins/README.zh-CN.md#更新)）。
 
 每个插件都会带上 [`dsh-claude-artifacts`](https://www.npmjs.com/package/dsh-claude-artifacts)，也就是它们共用的部分：「作品」页，以及把评论送到 Agent。要让技能只在某个 Agent 预设里出现，见[只让某个预设用某个技能](dsh-plugins/README.zh-CN.md#只让某个预设用某个技能)。
+
+Harness 跑在一台电脑上、你在另一台设备上用时（比如服务器上跑 `dsh web`，在笔记本或手机上打开），从「作品」页打开你的作品：插件会用那台设备访问得到的地址打开编辑器，你还是它的主人。见[在另一台设备上用](dsh-plugins/README.zh-CN.md#在另一台设备上用)。
 
 工作区里如果有自己的同名技能（在 `.agents/skills/` 或 `.dsh/skills/` 下），会用那一份，不用插件里的。一步一步的安装（包括从文件夹安装）、使用、更新、卸载和常见问题，见 [`dsh-plugins/`](dsh-plugins/README.zh-CN.md)。
 
@@ -150,7 +152,7 @@ https://jimliu.github.io/baoyu-design/dsh-plugins/index.json
 
 ## ChatGPT 插件
 
-这些技能也做成了 ChatGPT 桌面版和 Codex 的插件：[Baoyu Slides](chatgpt-plugins/baoyu-slides/)、[Baoyu Canvas](chatgpt-plugins/baoyu-canvas/)、[Baoyu Design System](chatgpt-plugins/baoyu-design-system/)、[Baoyu Dashboard](chatgpt-plugins/baoyu-dashboard/)、[Baoyu Motion](chatgpt-plugins/baoyu-motion/)（带 `motion-director` 和 `dataviz`）、[Baoyu Whiteboard](chatgpt-plugins/baoyu-whiteboard/) 和 [Baoyu Dataviz](chatgpt-plugins/baoyu-dataviz/)。把本仓库添加为 marketplace，再装你要的插件：
+这些技能也做成了 ChatGPT 桌面版和 Codex 的插件：[Baoyu Slides](chatgpt-plugins/baoyu-slides/)、[Baoyu Canvas](chatgpt-plugins/baoyu-canvas/)、[Baoyu Design System](chatgpt-plugins/baoyu-design-system/)、[Baoyu Data](chatgpt-plugins/baoyu-data/)、[Baoyu Motion](chatgpt-plugins/baoyu-motion/)（带 `motion-director` 和 `dataviz`）、[Baoyu Whiteboard](chatgpt-plugins/baoyu-whiteboard/) 和 [Baoyu Dataviz](chatgpt-plugins/baoyu-dataviz/)。把本仓库添加为 marketplace，再装你要的插件：
 
 ```bash
 codex plugin marketplace add JimLiu/baoyu-design --sparse .agents/plugins --sparse chatgpt-plugins
@@ -204,7 +206,7 @@ npx skills add JimLiu/baoyu-design --agent codex
 npx skills add JimLiu/baoyu-design --list
 
 # 只安装其中几个技能
-npx skills add JimLiu/baoyu-design --skill claude-slides --skill claude-dashboard
+npx skills add JimLiu/baoyu-design --skill claude-slides --skill claude-data
 ```
 
 它会把技能装到 Claude Code 的 `.claude/skills/`，以及 Cursor/Codex 风格 Agent 的 `.agents/skills/`（加上 `-g` 则装到 `~/` 级别的用户目录）。
@@ -234,7 +236,7 @@ Agent 会 clone 或抓取该仓库、加载 `SKILL.md` 然后开干 —— 临�
 
 ### 开始使用
 
-技能装好（或被抓取）之后，直接说你要什么（*「根据这份 PRD 做一套 12 页的幻灯片」*、*「把这个 CSV 做成仪表盘」*），或者点名调用：Claude Code 里用 `/claude-slides`、`/claude-design`、`/claude-design-system`、`/claude-dashboard`、`/claude-motion`、`/motion-director` 或 `/claude-whiteboard`，Codex 里用 `$claude-slides` 等。Agent 会把文件写到 `designs/<slug>/` 下，启动编辑器，再把它的 `http://127.0.0.1` 地址给你。
+技能装好（或被抓取）之后，直接说你要什么（*「根据这份 PRD 做一套 12 页的幻灯片」*、*「把这个 CSV 做成仪表盘」*），或者点名调用：Claude Code 里用 `/claude-slides`、`/claude-design`、`/claude-design-system`、`/claude-data`、`/claude-motion`、`/motion-director` 或 `/claude-whiteboard`，Codex 里用 `$claude-slides` 等。Agent 会把文件写到 `designs/<slug>/` 下，启动编辑器，再把它的 `http://127.0.0.1` 地址给你。
 
 ---
 

@@ -1,4 +1,4 @@
-// dsh-claude-whiteboard 2.13.0: built from baoyu-design.
+// dsh-claude-whiteboard 2.15.2: built from baoyu-design.
 var define_PLUGIN_default = { name: "claude-whiteboard", provider: "dsh-claude-whiteboard", skills: [{ name: "claude-whiteboard", description: "Use this for a local Whiteboard: a shared space for laying out thinking in whatever form it needs (a diagram, a flow, a map of ideas, a plan, a comparison, a drawn explanation, a small working embed) that opens in the bundled board editor, where people move, draw, comment and send comments to the agent. Its content lives in the board's own store, written with this skill's script, never in files you edit by hand. Read it before you create a board or change one. Not for a slide deck, a document, a film or a static HTML page.", scriptAlias: "A", comments: true }] };
 
 import { readFile } from "node:fs/promises";
@@ -110,13 +110,14 @@ function runtimeSection(skill, skillDir, node, platform = process.platform, watc
       skill.commentsBy === "mention" ? "(read the block, change the doc with `update`, then `comment-reply`)." : "(change the files, then `comment-reply`).",
       "So do not start `comments --wait` yourself, where Comments says to: run `open` in the foreground (not",
       "`run_in_background`), and the wait starts with it. It stops when the editor stops; after `stop`, the next `open`",
-      "starts it again.",
+      "starts it again. Harness starts the next wait when your turn ends, which is where this skill says to wait again:",
+      "finish what a message asks for in the turn that takes it.",
       ...skill.commentsBy === "mention" ? ["", "When you first give the link, tell the user that a comment with `@agent` in it reaches you (type `@` and pick agent)."] : [],
       ...skill.requests ? [
         "",
         "The page's buttons reach you the same way: a request one of them sends arrives as such a message, under",
-        "`requests` (its words in `text`, the button in `label`). Those are the user's words, as if typed here: handle",
-        "them as this skill says for those words."
+        "`requests` (the button in `label`, what it asks in `text`), as `comments <root> --wait` printed it for that",
+        "page. It is a request from the page wherever this skill speaks of one: handle it as this skill says for those."
       ] : []
     );
   }

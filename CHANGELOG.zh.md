@@ -4,6 +4,57 @@
 
 本文档记录 `baoyu-design` 的重要变更。
 
+## 2.15.2 - 2026-11-12
+
+### 新功能
+- **`claude-design`：按别的屏幕宽度看页面，并把这个宽度下的整页存成 PNG。** 把画板全窗口打开（工具栏的 **Play**，再点画板），选 **Fill**：Fill / Fit 旁边多了一个宽度控件。可以跟随窗口，也可以按 Phone 390、Tablet 768、1024、1280、1440、1920 px 排版（画板自己的宽度不在其中时也列出来），页面居中；比窗口宽时按比例缩小放进窗口，宽度旁边写着比例。只要这个宽度不是画板自己的宽度，画板的 **Export** 里就有 **PNG 1×, this width** 和 **PNG 2×, this width**：按这个宽度排版的整页，高度跟内容走，存成 `<名字>-<宽度>w@<倍数>x.png`。`SKILL.md` 也写了：用户要看某个屏幕宽度下的页面、或要整页截图时，Agent 告诉他们在哪里操作（@hh0592821 提出，[#42](https://github.com/JimLiu/baoyu-design/issues/42)）。
+
+## 2.15.1 - 2026-11-12
+
+### 修复
+- DeepSeek Harness：「作品」页每行只显示一个作品，卡片和页面一样宽。从 2.14.1 起，给某一种卡片的示意图写的样式也作用到了整个列表上。现在列表恢复成多列的卡片网格。
+- DeepSeek Harness：从文件夹添加、后来又卸载的插件，在 **Make something new** 下没有磁贴，也没法从页面上安装。卸载后它的文件还留在 profile 里，页面把它当成了「装了但关掉」的插件。现在页面按应用的插件管理器认定的「已安装」来判断，这个插件会显示 **Not installed**（未安装）磁贴，可以从那里安装。
+
+## 2.15.0 - 2026-11-11
+
+### 新功能
+- **`claude-motion` 跟上了 claude.ai 2026-11-10 的更新。** 只有 `narration.js`、没有自己配音轨的影片，侧边栏 Tweaks 里多了 **Voiceover** 一节，时间轴下多了一条 voiceover 轨。改一行台词，点 **Record changes**，这处改动会作为一个请求发给 agent（`comments --wait` 在 `requests` 下打印它；没有 agent 在听时，给出文字让你复制）。有自己配音轨（`modules/voice.json`）的影片，保持原来的 **Script** 标签页和轨道。`write-db` 现在拒绝写页面自己记的手改记录（`modules/retyped.json`、`recolored.json`、`recut.json`、`refaced.json`、`retouched.json`、`fetched-fonts.json`），报 `PAGE_ONLY`。
+- **`claude-design-system` 跟上了 claude.ai 2026-11-10 的更新。** 页面一被隐藏（比如切到别的标签页）就立刻保存，不再等自动保存。关掉 toast 后焦点回到原来的位置，F6 也能走到 toast。
+- **`claude-slides` 跟上了 claude.ai 2026-11-10 的更新。** 读不出来的幻灯片，或标记可能被部分隐藏的幻灯片，会在幻灯片上和属性面板里说明，并带 **Ask the agent to fix**（没有对话在听时，复制一段提示词让你贴给 agent）。选中的 SVG 图片不能设成 Cover 或 Hug，属性面板会说明原因：重新打开演示稿时它会变样。放映时从页码条上开始的滑动不再翻页。`deck.json` 带着这个版本不认识的 `format` 时，只读打开，顶上提示它由更新版本的 Slides 保存，文件不会被改写。表格按行包一层，并带 table、row、cell 的 role，列对得齐，读屏软件也按表格来读。
+- **所有编辑器的评论按 Markdown 显示。** 评论或 agent 回复里的 Markdown（粗体、代码、列表、引用等）直接画出来，不再显示成原样字符；**All comments** 列表里每一行仍是平铺的文字。新评论卡在你输入时有焦点环。
+- **DeepSeek Harness：「作品」页的类型磁贴跟 claude.ai 的「Make something new」一行一致。** 每个类型一块磁贴：淡色底加粉笔涂鸦（深色模式下底色和线条互换），类型图标重画，Data、Whiteboard、Motion 带 Beta 角标。鼠标停在磁贴上，或者用 Tab 走到它，会出现一张卡片，写着类型名、它做什么、装没装，以及开始新建、安装或查看安装的按钮。Esc 关闭卡片，触屏不出卡片。
+
+### 修复
+- `claude-slides`：第三方许可说明补上了 pptxgenjs 源码文件头写明的 OfficeGen 署名。
+
+### 文档
+- `claude-motion` 的 `SKILL.md` 和 reference 也跟着这次更新。agent 收尾时给出影片的地址。循环播放、GIF、展厅屏幕这类影片，不要求配乐就不配。请求里既说了影片干什么用、又说了要什么样子，就不再弹问题表单。普通的影片从 Inter 和 Space Grotesk 起手。`by-hand.md` 讲了页面记录的手改台词和手改颜色。
+
+## 2.14.1 - 2026-11-11
+
+### 新功能
+- **DeepSeek Harness：在另一台设备上打开你的作品。** Harness 跑在一台电脑上、你在另一台设备上用时（比如服务器上跑 `dsh web`，在笔记本或手机的浏览器里通过同一个局域网或 tailnet 打开），从 **Artifacts**（「作品」）打开，或者点评论卡片上的 **View thread**，拿到的是 `http://127.0.0.1:…`，只有那台电脑打得开。现在插件会给你手上这台设备一个它自己的链接，地址就是浏览器访问 Harness 用的那个，在新标签页里打开。通过它打开，你就是编辑器的主人，和在那台电脑上一样：能编辑，也有 **Send to Agent**。经过代理或用自己的域名访问时，把 `BAOYU_DESIGN_REMOTE_HOST` 设成其他设备访问那台电脑用的地址；设成 `off` 就关掉这个功能。每个编辑器的 `open` 都可以加 `--remote[=<host>]`，打出这个主人链接（`--remote=off` 关掉），`share <文件夹> --reset owner` 换一把钥匙。见[在另一台设备上用](https://github.com/JimLiu/baoyu-design/blob/main/dsh-plugins/README.zh-CN.md#在另一台设备上用)（@akaDeyve 提出，[#40](https://github.com/JimLiu/baoyu-design/issues/40)）。
+- **DeepSeek Harness：`dsh-claude-dashboard` 可以更新成 `dsh-claude-data`。** 「作品」页上这个类型叫 **数据**（Data），装着 `dsh-claude-dashboard` 的，会把换到新插件当作一项更新来提示，写作 `claude-dashboard → claude-data`：点 **Update**（更新）会先装上 `dsh-claude-data`（开关和旧插件一样），再卸载 `dsh-claude-dashboard`。预设里写了 `dsh-claude-dashboard` 的，旧插件会留着，页面上会说要改哪里。2.14.0 说 `dsh-claude-dashboard` 不再更新；现在改成它继续发不带技能的版本。2.13.0 或更早的「作品」页会把这个版本当作更新来提示，装上它就有了会提示换插件的新「作品」页，提示出来后再点一次 **Update**。
+
+### 修复
+- `claude-design-system`：通过 **Share**（分享）链接进来的访客加不了资源和字体，页面一直停在 **Adding …**。局域网上用明文 http 打开的页面没有浏览器自带的哈希功能，上传要用它。现在由页面自己算。
+- DeepSeek Harness：卸载正在提供「作品」页的那个插件后，这个页面一直是 404，要重启应用才好。现在另一个装着的插件会马上接手。
+
+## 2.14.0 - 2026-11-11
+
+### 新功能
+- **`claude-dashboard` 改名为 `claude-data`。** claude.ai 把这个类型改名为 Data，技能、它的 DeepSeek Harness 插件（`dsh-claude-data`）和 ChatGPT、Codex 插件（**Baoyu Data**）都跟着改名。调用名是 `/claude-data`（Codex 里是 `$claude-data`）。用 `claude-dashboard` 做的仪表盘，原样用 `claude-data` 打开，文件夹不变；地址从 `/dashboard/<id>/` 变成 `/data/<id>/`。`dsh-claude-dashboard` 和 **Baoyu Dashboard** 不再更新：装上 `dsh-claude-data`（**Artifacts** 页面上它是一个 **Not installed** 的卡片，点开就能装）或 **Baoyu Data**，再把旧的删掉。改名前打开过的仪表盘，在 Artifacts 页面上按新的类型列出，照样能打开；仪表盘上发出的评论经 `dsh-claude-data` 交给 Agent（这一版之前单独发到 npm 的 `dsh-claude-data` 这两样都不行，因为和它配套的 Host 插件还不认识新名字）。
+- **`claude-data` 跟上了 claude.ai 2026-11-10 的更新。** 仪表盘的工具栏多了一个 **Design** 按钮，里面是当前的外观和新的 **Style** 一段：图表配色、页面底色、字体、圆角和字号。改了页面马上显示，点 **Save** 保存；**Reset all** 回到默认。数据集可以是文本文件（`format: "text"`），由页面用 loader 拆成行。`dash/meta` 可以写页面的语言（`lang`）。`check` 还会报告打开着的页面自查的结果（`pageCheck`：通过、没通过和出了什么问题、还在加载），和页面的 `runs` 放在一起。
+- **`claude-design` 跟上了 claude.ai 2026-11-10 的更新。** 画笔、直线和箭头有了 **Drawing options** 条：四档粗细，实线、虚线或点线。画板的导出菜单里多了 **All artboards (.png)**，把这一页每块画板各导出一张 PNG，打成一个 zip。画布保存的布局文件坏了时，画布变成只读，顶上有横幅和 **Ask the agent to fix** 按钮，文件修好后自己恢复。新增 reference `shaders.md`，Agent 照它做着色器画板（WebGL，或者像光、水、烟、液体那样流动的效果）。
+
+### 修复
+- `claude-design`：画板里跑的是 React 的开发版（1.1 MB），画的线会报 `Invalid DOM property vector-effect` 这类警告。现在是生产版（354 KB）。
+- `claude-design`：两个标签页改了同一块画板、选 **Keep both** 时，副本放在原画板右边 80 px，可能压住那里的另一块画板。现在放在这一行右边第一个空位。
+- 所有编辑器：键盘在评论层里时（比如停在评论按钮上）按 Escape，现在会退出评论模式，和在页面上按一样。
+
+### 文档
+- `claude-data` 的 `SKILL.md` 和 reference 也跟着这次更新：什么在哪里运行（每个读者的浏览器加载数据集，Sources 说明每个数字从哪里来），页面的代码什么时候可以写入、能写什么，以及 `check` 和 `runs` 怎样报告出错的页面。
+
 ## 2.13.0 - 2026-11-10
 
 ### 新功能
