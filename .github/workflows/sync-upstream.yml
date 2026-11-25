@@ -8,9 +8,10 @@ name: Sync upstream
 #     auto-merges when green.
 #   - Whatever is left after the first conflicting commit (the "tail") goes
 #     onto `sync/review`, opens a PR, and is LEFT OPEN for a human to resolve.
-#     The fork's customization is fork-features/ plus one inserted paragraph
-#     in four skills/*/SKILL.md (see fork-features/README.md); an upstream
-#     rewrite of those SKILL.md openings is the expected conflict.
+#     The fork's customization is fork-features/, its omp-tern copies in four
+#     skills/*/, one inserted paragraph in those skills' SKILL.md and the
+#     fork test glob in package.json (see fork-features/README.md); an
+#     upstream rewrite of those SKILL.md openings is the expected conflict.
 #
 # Guarantees and the reasoning behind them:
 #   - At most ONE un-merged sync PR of each kind lives at a time. This is NOT

@@ -3,6 +3,6 @@
   "version": "2.15.2",
   "private": true,
   "scripts": {
-    "test": "node --test 'archive/baoyu-design/agents/tests/*.test.mjs'"
+    "test": "node --test 'archive/baoyu-design/agents/tests/*.test.mjs' 'fork-features/*.test.mjs'"
   }
 }
