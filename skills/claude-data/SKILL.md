@@ -17,6 +17,9 @@ page can draw or do anything its code can, except what this guide rules out. A
 chart they named is drawn even where `d3` has no helper for it. If you still
 draw another, say which and why.
 
+**In omp or Tern** (mouriya-s-lab fork): read `omp-tern/GUIDE.md` in this skill's folder before your first
+call. It maps these pages' tools to omp's and adds a step after `open` that shows the editor in Tern.
+
 ## Who runs what
 
 In each reader's browser the type reads the datasets' files and hands your
